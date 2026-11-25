@@ -60,3 +60,7 @@ Tlačítko Nápověda u úlohy nabídne první krok podle zadání a způsobu pr
 Hra Výstup na vrchol odměňuje správné odpovědi body. Správná odpověď po
 nápovědě nebo na druhý pokus také posune hráče po trase. Body a odemčené
 zastávky jsou dostupné ve stejném prohlížeči i po opětovném otevření.
+
+Správný mezikrok se zapíše pod úlohu a nespotřebuje pokus. Lze zadat
+i několik výrazů spojených rovnítkem. Cvičení zkontroluje každý z nich
+a vyžádá si závěrečný tvar podle zadání.

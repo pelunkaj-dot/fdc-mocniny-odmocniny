@@ -10,7 +10,7 @@ for(let topic=0;topic<8;topic++) {
    assert.ok(tasks.length>=200, `${topic}/${level} has ${tasks.length}`);
    for(const task of tasks) {
      assert.equal(grade(task,task.answer),'correct',JSON.stringify(task));
-     assert.equal(grade(task,'??'),'wrong');
+     assert.equal(grade(task,'??'),task.form==='choice'?'wrong':'invalid');
      assert.ok(math(task.expr).startsWith('<math'));
    }
    total+=tasks.length;
@@ -20,7 +20,7 @@ for(let topic=0;topic<8;topic++) {
 const cases=[
  ['number','1/8','0,125','correct'],
  ['number','-9','−9','correct'],
- ['number','1','1/0','wrong'],
+ ['number','1','1/0','invalid'],
  ['number','1','1/1+1','wrong'],
  ['fraction','1/-8','-2/16','correct'],
  ['fraction','1/8','0,125','form'],
@@ -66,3 +66,29 @@ for(const t of practiceBank('mental',0,0)) {
  const cube=t.expr.match(/^([0-9]+)\^3/);
  if(cube) assert.ok(Number(cube[1])<=5);
 }
+
+
+for(const [form,answer,input,expected] of [
+ ['number','27','3·3·3','step'],
+ ['number','25','(2+3)^2 = 5^2 = 25','correct'],
+ ['number','25','(2+3)^2 = 4^2 = 25','wrong'],
+ ['number','-9','-3²','step'],
+ ['number','-9','(-3)²','wrong'],
+ ['number','-2','∛(-8)','step'],
+ ['number','0,125','2⁻³','step'],
+ ['number','0,125','(1/2)^3','step'],
+ ['number','2','√(-4)','invalid'],
+ ['number','2','√(4','invalid'],
+ ['number','12','1 2','invalid'],
+ ['number','1','x/x','wrong'],
+ ['power','x^6','(x²)^3','step'],
+ ['power','x^6','x² · x^4','form'],
+ ['monomial','5x²','9x² − 4x²','step'],
+ ['radical','6√(2)','√(36 · 2)','step'],
+ ['radical','6√(2)','√72 = √36 · √2 = 6√2','correct'],
+ ['scientific','4,2 × 10^(-3)','(42/10) × 10^(-3)','step'],
+ ]) assert.equal(grade({form,answer},input),expected,input);
+assert.equal(grade({form:'number',answer:'3,51',expr:'√(12,34)',prompt:'Vypočítej na kalkulačce a zaokrouhli.'},'√(12,34)'),'step');
+assert.equal(grade({form:'monomial',answer:'x²',expr:'2x² − x²'},'x³/x'),'wrong');
+assert.equal(grade({form:'power',answer:'x^2',expr:'x^4 : x^2'},'x^3/x'),'step');
+assert.equal(grade({form:'number',answer:'0'},'0,1 + 0,2 − 0,3'),'step');

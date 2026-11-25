@@ -1,6 +1,6 @@
 import {topics, LIMIT} from './tasks.mjs';
 import {modes, practiceBank} from './practice.mjs?v=3';
-import {grade} from './answers.mjs';
+import {grade} from './answers.mjs?v=4';
 import {math} from './render.mjs';
 import {coachHint, milestones, award} from './coach.mjs?v=3';
 
@@ -147,7 +147,7 @@ function exercise(mode,topic,level,game=false) {
    let attempts=0, finished=false, assisted=false;
    const controls=task.choices?
      '<div class="row">'+task.choices.map(c=>'<button type="button" data-choice="'+c+'">'+c+'</button>').join('')+'</div>':
-     '<label for="answer">Odpověď</label><input id="answer" aria-describedby="hint" autocomplete="off" maxlength="100">'+
+     '<label for="answer">Odpověď</label><input id="answer" aria-describedby="hint" autocomplete="off" maxlength="160">'+
      '<p id="hint" class="muted">'+hints[task.form]+'</p>'+
      '<div class="row" id="keys" aria-label="Matematické znaky">'+['−',',','/','^','√(',')','×','x','y'].map(c=>'<button type="button" data-key="'+c+'">'+c+'</button>').join('')+'</div>'+
      '<p><button class="primary" type="submit">Zkontrolovat</button></p>';
@@ -160,6 +160,7 @@ function exercise(mode,topic,level,game=false) {
    const form=area.querySelector('form');
    const input=form.querySelector('input');
    const feedback=area.querySelector('.feedback');
+   const steps=area.querySelector('#steps');
    const solution=area.querySelector('#solution');
    const next=area.querySelector('#next');
    if(focus) (input??form.querySelector('button')).focus();
@@ -167,10 +168,29 @@ function exercise(mode,topic,level,game=false) {
    function submit(answer) {
      if(finished || !answer.trim()) return;
      const result=grade(task,answer);
-     attempts++;
      feedback.dataset.status=result;
+     if(result==='step'||result==='form') {
+       feedback.textContent=result==='step'
+         ? 'Správný mezikrok. Pokračuj k výsledku.'
+         : 'Hodnota souhlasí. Dopiš výsledek v požadovaném tvaru.';
+       if(steps.lastElementChild?.textContent!==answer.trim()) {
+         const line=document.createElement('li');
+         line.textContent=answer.trim();
+         steps.append(line);
+         steps.hidden=false;
+       }
+       input?.focus();
+       input?.select();
+       return;
+     }
+     if(result==='invalid') {
+       feedback.textContent='Zápis se nedá vyhodnotit. Zkontroluj závorky, znaménka a případné dělení nulou.';
+       input?.focus();
+       return;
+     }
+     attempts++;
      if(result!=='correct' && attempts===1) {
-       feedback.textContent=result==='form'?'Hodnota odpovídá. Uprav zápis podle pokynu a zkus to znovu.':'Zkus to ještě jednou.';
+       feedback.textContent='Zkus to ještě jednou.';
        input?.focus();
        input?.select();
        return;
@@ -189,7 +209,7 @@ function exercise(mode,topic,level,game=false) {
        void play();
      } else {
        counts.missed++;
-       feedback.textContent=result==='form'?'Hodnota odpovídá. Podívej se na požadovaný tvar.':'Podívej se na řešení.';
+       feedback.textContent='Podívej se na řešení.';
      }
      solution.innerHTML='<p><strong>Výsledek</strong> '+(task.choices?task.answer:math(task.answer))+'</p><p>'+task.why+'</p>';
      solution.hidden=false;

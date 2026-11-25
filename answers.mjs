@@ -1,7 +1,10 @@
-const norm = value => String(value).toLowerCase().trim()
- .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+/g, s=>'^'+[...s].map(c=>'0123456789-'['⁰¹²³⁴⁵⁶⁷⁸⁹⁻'.indexOf(c)]).join(''))
- .replace(/−/g,'-').replace(/[×·*]/g,'*').replace(/:/g,'/')
- .replace(/\s+/g,'').replace(/,/g,'.').replace(/\^\(([+-]?\d+)\)/g,'^$1');
+import {readExpression, sameValue} from './expression.mjs?v=4';
+
+const notation = value => String(value).toLowerCase().trim()
+ .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+/g, s=>'^('+[...s].map(c=>'0123456789-'['⁰¹²³⁴⁵⁶⁷⁸⁹⁻'.indexOf(c)]).join('')+')')
+ .replace(/[−–]/g,'-').replace(/[×·⋅]/g,'*').replace(/[÷:]/g,'/')
+ .replace(/\*\*/g,'^').replace(/,/g,'.');
+const compact = value => value.replace(/\s+/g,'').replace(/\^\(([+-]?\d+)\)/g,'^$1');
 
 const scalar = '[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)';
 const fraction = new RegExp('^('+scalar+')/('+scalar+')$');
@@ -53,9 +56,7 @@ function monomial(s) {
 }
 const equal=(a,b)=>Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=1e-12*Math.max(1e-9,Math.abs(a),Math.abs(b));
 
-export function grade(task,input) {
- const s=norm(input), target=norm(task.answer);
- if(!s || s.length>100) return 'wrong';
+function finalForm(task,s,target) {
  switch(task.form) {
  case 'choice': return s===target?'correct':'wrong';
  case 'power': {
@@ -85,4 +86,49 @@ export function grade(task,input) {
  case 'monomial': return equal(monomial(s),monomial(target))?'correct':'wrong';
  default: return equal(number(s),number(target))?'correct':'wrong';
  }
+}
+
+export function grade(task,input) {
+ const source=notation(input);
+ if(!source || source.length>160) return 'invalid';
+ if(task.form==='choice') return finalForm(task,compact(source),notation(task.answer));
+ if(/\d\s+\d/.test(source)) return 'invalid';
+ const parts=source.split('=').map(part=>part.trim());
+ const target=notation(task.answer);
+ const allowedVariables=new Set(target.match(/[xy]/g)??[]);
+ const allowedNonzero=new Set();
+ for(const expression of [target,notation(task.expr??'')]) {
+   try {for(const symbol of readExpression(expression).nonzero) allowedNonzero.add(symbol);} catch {}
+ }
+ let outcome;
+ for(const [index,part] of parts.entries()) {
+   if([...part.matchAll(/[xy]/g)].some(([symbol])=>!allowedVariables.has(symbol))) return 'wrong';
+   const form=finalForm(task,compact(part),compact(target));
+   if(form==='correct'||form==='form') {
+     outcome=form;
+     continue;
+   }
+   let value;
+   try {value=readExpression(part);} catch {return 'invalid';}
+   try {
+     if([...value.nonzero].every(symbol=>allowedNonzero.has(symbol)) && sameValue(value,readExpression(target))) {
+       outcome='step';
+       continue;
+     }
+     // A calculator expression may still need rounding to the requested precision.
+     if(task.prompt?.includes('zaokrouhli') && !Number.isFinite(number(compact(part))) &&
+         sameValue(value,readExpression(notation(task.expr)))) {
+       outcome='step';
+       continue;
+     }
+   } catch {}
+   if(index===0&&parts.length>1&&compact(part)===compact(notation(task.expr))) {
+     // The displayed prompt can be the first entry only if it is an expression to evaluate.
+     if(!task.prompt?.startsWith('Vypočítej')&&!task.prompt?.startsWith('Uprav')&&
+        !task.prompt?.startsWith('Částečně odmocni')&&!task.prompt?.startsWith('Zjednoduš')) return 'wrong';
+     continue;
+   }
+   return 'wrong';
+ }
+ return outcome??'invalid';
 }

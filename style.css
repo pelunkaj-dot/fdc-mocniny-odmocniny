@@ -67,3 +67,6 @@ main {padding-bottom:44px}
 .route-stops {display:grid;gap:6px;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));list-style:none;padding:0;margin:10px 0}
 .route-stops li {font-size:.82rem;border:1px solid #a1cfc570;border-radius:8px;padding:5px 8px}
 .route-stops .reached {background:#c9f1dd;color:#123d35;font-weight:750}
+.steps {margin:12px 0;padding:10px 12px 10px 34px;border-left:3px solid #339572;background:#eaf7f0;border-radius:8px;overflow-wrap:anywhere}
+.feedback[data-status=step],.feedback[data-status=form] {color:var(--ok)}
+.feedback[data-status=invalid] {color:var(--bad)}
