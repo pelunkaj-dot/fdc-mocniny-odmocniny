@@ -9,8 +9,16 @@ a práci s typickými chybami.
 
 Spusť `python3 -m http.server 8765` v kořeni projektu a otevři
 `http://localhost:8765/mocniny-demo.html`. Demo nabídne 18 dokončených úloh
-na prohlížeč v šesti základních cvičebnách. Statistiky používají localStorage.
-Nedokončená úloha se do statistik nepočítá.
+na prohlížeč ve všech třech režimech dohromady. Statistiky používají localStorage.
+Nedokončená úloha se do statistik nepočítá. Limit dema je společný pro
+všechny režimy. Statistiky jednotlivých režimů se ukládají samostatně.
+
+Rozcestník nabízí tři režimy. Zpaměti nebo na papíře se procvičuje všech osm
+oblastí s malými hodnotami a se školními pravidly pro symbolické úpravy.
+Pro práci s tabulkami stačí tabulka druhých mocnin od 1 do 100. Kalkulačkové
+úlohy vyžadují zaokrouhlení konečného výsledku na uvedený počet desetinných
+míst. Tabulky a kalkulačka mají samostatné cvičebny mocnin, odmocnin a
+kombinovaných výpočtů.
 
 - `node tests/math.mjs` kontroluje banky a vyhodnocování odpovědí.
 - `node tests/browser.cjs` používá Playwright a lokální HTTP server na portu
@@ -36,6 +44,7 @@ existujícím členském systému.
 ## Kód
 
 - `tasks.mjs` obsahuje šablony, výsledky a banky pro tři úrovně v každém okruhu.
+- `practice.mjs` obsahuje banky podle povolené pomůcky.
 - `answers.mjs` ověřuje číselné hodnoty a požadované tvary. Algebraické
   odpovědi používají předepsaný tvar mocnin nebo jednočlenu. Vstup se
   nevyhodnocuje jako JavaScript.

@@ -1,4 +1,5 @@
-import {bank, topics, LIMIT} from './tasks.mjs';
+import {topics, LIMIT} from './tasks.mjs';
+import {modes, practiceBank} from './practice.mjs';
 import {grade} from './answers.mjs';
 import {math} from './render.mjs';
 
@@ -47,11 +48,11 @@ async function play() {
 }
 
 const decks=new Map();
-function nextTask(topic,level) {
- const key=topic+'/'+level;
+function nextTask(mode,topic,level) {
+ const key=mode+'/'+topic+'/'+level;
  let deck=decks.get(key);
  if(!deck?.remaining.length) {
-   const remaining=bank(topic,level);
+   const remaining=practiceBank(mode,topic,level);
    for(let i=remaining.length-1;i>0;i--) {
      const j=Math.floor(Math.random()*(i+1));
      [remaining[i],remaining[j]]=[remaining[j],remaining[i]];
@@ -67,31 +68,39 @@ function nextTask(topic,level) {
  return task;
 }
 
-function hub() {
- const banner=demo?'<div class="notice">Demo nabízí 18 úloh celkem v šesti okruzích. '+offer+'</div>':'';
- root.innerHTML=banner+'<h2>Vyber si cvičebnu</h2><div class="grid">'+topics.map(([title],i)=>{
-   const available=!demo||demoTopics.includes(i);
-   return '<section class="panel tile"><div class="art">'+math(symbols[i])+'</div><h2>'+title+'</h2>'+
-     (available?'<a class="button" href="#'+(i+1)+'/1">Procvičovat</a>':'<small>V plné verzi</small>')+'</section>';
+function hub(mode=null) {
+ const banner=demo?'<div class="notice">Demo nabízí 18 úloh celkem ve všech režimech dohromady. '+offer+'</div>':'';
+ if(!mode) {
+   root.innerHTML=banner+'<h2>Jak chceš počítat?</h2><div class="grid">'+Object.entries(modes).map(([id,[title,description]])=>
+     '<section class="panel tile"><h2>'+title+'</h2><p>'+description+'</p><a class="button" href="#'+id+'">Vybrat cvičebnu</a></section>'
+   ).join('')+'</div>';
+   return;
+ }
+ const [label,description,availableTopics]=modes[mode];
+ root.innerHTML=banner+'<nav><a href="#">← Způsob počítání</a></nav><h2>'+label+'</h2><p>'+description+'</p><div class="grid">'+availableTopics.map(i=>{
+   const available=!demo||mode!=='mental'||demoTopics.includes(i);
+   return '<section class="panel tile"><div class="art">'+math(symbols[i])+'</div><h2>'+topics[i][0]+'</h2>'+
+     (available?'<a class="button" href="#'+mode+'/'+(i+1)+'/1">Procvičovat</a>':'<small>V plné verzi</small>')+'</section>';
  }).join('')+'</div>';
 }
 
-function exercise(topic,level) {
+function exercise(mode,topic,level) {
+ const [modeTitle,modeDescription]=modes[mode];
  const [title,lesson,example]=topics[topic];
- const key=topic+'/'+level;
+ const key=mode+'/'+topic+'/'+level;
  const counts=progress.stats[key]??={first:0,second:0,missed:0};
- root.innerHTML='<nav class="row toolbar"><a href="#">← Rozcestník</a>'+
+ root.innerHTML='<nav class="row toolbar"><a href="#'+mode+'">← Výběr cvičebny</a>'+
    '<button id="sound" type="button"></button></nav>'+
-   '<div class="layout"><section class="panel"><h2>'+title+'</h2>'+
+   '<div class="layout"><section class="panel"><h2>'+title+'</h2><p class="notice"><strong>'+modeTitle+'</strong><br>'+modeDescription+'</p>'+
    '<div class="row"><label for="level">Obtížnost</label><select id="level">'+
     ['Základní','Střední','Pokročilá'].slice(0,demo?1:3).map((label,i)=>'<option value="'+i+'">'+label+'</option>').join('')+
    '</select></div><div id="practice"></div></section>'+
-   '<aside class="panel"><h2>Jak na to</h2><p>'+lesson+'</p>'+
-   '<div class="notice">'+example.split('; ').map(math).join('<br>')+'</div>'+
+   '<aside class="panel"><h2>Jak na to</h2><p>'+(mode==='mental'?lesson:modeDescription)+'</p>'+
+   '<div class="notice">'+(mode==='mental'?example:mode==='tables'?'√(2025) = 45; 45^2 = 2025':'√(12,34) ≈ 3,51').split('; ').map(math).join('<br>')+'</div>'+
    '<h2>Výsledky této úrovně</h2><dl id="stats"></dl>'+(demo?offer:'')+'</aside></div>';
  const difficulty=root.querySelector('#level');
  difficulty.value=level;
- difficulty.onchange=()=>{location.hash=(topic+1)+'/'+(Number(difficulty.value)+1);};
+ difficulty.onchange=()=>{location.hash=mode+'/'+(topic+1)+'/'+(Number(difficulty.value)+1);};
  const soundButton=root.querySelector('#sound');
  function labelSound() { soundButton.textContent='Zvuk '+(sound?'zapnutý':'vypnutý');soundButton.setAttribute('aria-pressed',String(sound)); }
  labelSound();
@@ -113,7 +122,7 @@ function exercise(topic,level) {
      area.innerHTML='<div class="notice"><h3>Demo je dokončeno</h3><p>Vyčerpal jsi všech '+LIMIT+' ukázkových úloh.</p>'+offer+'</div>';
      return;
    }
-   const task=nextTask(topic,level);
+   const task=nextTask(mode,topic,level);
    let attempts=0, finished=false;
    const controls=task.choices?
      '<div class="row">'+task.choices.map(c=>'<button type="button" data-choice="'+c+'">'+c+'</button>').join('')+'</div>':
@@ -174,15 +183,22 @@ function exercise(topic,level) {
 }
 
 function route() {
- const match=location.hash.match(/^#([1-8])\/([1-3])$/);
- if(!match) {hub();return;}
- const topic=Number(match[1])-1,level=Number(match[2])-1;
- if(demo && (level!==0 || !demoTopics.includes(topic))) {
-   history.replaceState(null,'',location.pathname+location.search);
-   hub();
+ const hash=location.hash.slice(1);
+ if(/^([1-8])\/([1-3])$/.test(hash)) {
+   location.replace('#mental/'+hash);
    return;
  }
- exercise(topic,level);
+ const [mode,topicNumber,levelNumber]=hash.split('/');
+ if(!Object.hasOwn(modes,mode)) {hub();return;}
+ if(!topicNumber) {hub(mode);return;}
+ const topic=Number(topicNumber)-1,level=Number(levelNumber)-1;
+ if(!modes[mode][2].includes(topic)||![0,1,2].includes(level)||
+     (demo && (level!==0 || (mode==='mental'&&!demoTopics.includes(topic))))) {
+   history.replaceState(null,'','#'+mode);
+   hub(mode);
+   return;
+ }
+ exercise(mode,topic,level);
 }
 if(document.documentElement.style.visibility!=='hidden') {
  addEventListener('hashchange',route);

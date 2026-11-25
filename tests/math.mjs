@@ -39,3 +39,18 @@ for(const [form,answer,input,result] of cases) assert.equal(grade({form,answer},
 assert.match(math('∛(-8)'),/<mroot>/);
 assert.match(math('(2/3)^(2)'),/<msup>.*<mfrac>/);
 console.log(total+' unikátních úloh v 24 bankách, '+cases.length+' kontrol odpovědí');
+
+const {modes,practiceBank}=await import('../practice.mjs');
+let modeTotal=0;
+for(const [mode,[,,list]] of Object.entries(modes)) {
+ for(const topic of list) for(let level=0;level<3;level++) {
+   const tasks=practiceBank(mode,topic,level);
+   assert.ok(tasks.length>=200,`${mode}/${topic}/${level}: ${tasks.length}`);
+   for(const t of tasks) assert.equal(grade(t,t.answer),'correct',JSON.stringify(t));
+   modeTotal+=tasks.length;
+ }
+}
+assert.ok(practiceBank('tables',1,1).every(t=>t.expr.startsWith('√(')&&t.prompt.includes('těsně pod')));
+assert.ok(practiceBank('calculator',0,1).every(t=>t.prompt.includes('3 desetinná místa')));
+assert.deepEqual(practiceBank('tables',2,0),[]);
+console.log(modeTotal+' úloh v bankách rozdělených podle pomůcky');
