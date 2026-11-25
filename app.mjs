@@ -2,7 +2,7 @@ import {topics, LIMIT} from './tasks.mjs';
 import {modes, practiceBank} from './practice.mjs?v=7';
 import {grade} from './answers.mjs?v=5';
 import {math} from './render.mjs';
-import {coachHint, milestones, award} from './coach.mjs?v=7';
+import {coachHint, continuationHint, milestones, award} from './coach.mjs?v=8';
 import {customExercise} from './tutor.mjs?v=5';
 import {createPowerTable} from './power-table.mjs';
 
@@ -191,7 +191,9 @@ function exercise(mode,topic,level,game=false) {
    area.innerHTML=(demo?'<p class="muted">Ukázková úloha '+(progress.used+1)+' z '+LIMIT+'</p>':'')+
      '<p>'+task.prompt+'</p><div class="expression">'+math(task.expr)+'</div>'+tableSlot+
      (task.condition?'<p class="muted">Podmínka '+math(task.condition)+'</p>':'')+
-     '<details class="coach"><summary>Nápověda</summary><p>'+coachHint(mode,topic,task)+'</p></details><form>'+controls+'</form><ol id="steps" class="steps" aria-label="Správné mezikroky" hidden></ol><p class="feedback" aria-live="polite"></p><div id="solution" hidden></div>'+
+     '<details class="coach"><summary>Nápověda</summary><p>'+coachHint(mode,topic,task)+'</p></details><section class="continuation" hidden><strong>Správný mezikrok</strong>'+
+     '<ol id="steps" aria-label="Správné mezikroky"></ol><p id="step-direction"></p></section>'+
+     '<form>'+controls+'</form><p class="feedback" aria-live="polite"></p><div id="solution" hidden></div>'+
      '<button class="primary" id="next" type="button" hidden>Další úloha</button>';
    mountPowerTable?.();
    const coach=area.querySelector('.coach');
@@ -200,6 +202,8 @@ function exercise(mode,topic,level,game=false) {
    const input=form.querySelector('input');
    const feedback=area.querySelector('.feedback');
    const steps=area.querySelector('#steps');
+   const continuation=area.querySelector('.continuation');
+   const direction=area.querySelector('#step-direction');
    const solution=area.querySelector('#solution');
    const next=area.querySelector('#next');
    if(focus) (input??form.querySelector('button')).focus();
@@ -209,17 +213,21 @@ function exercise(mode,topic,level,game=false) {
      const result=grade(task,answer);
      feedback.dataset.status=result;
      if(result==='step'||result==='form') {
-       feedback.textContent=result==='step'
-         ? 'Správný mezikrok. Pokračuj k výsledku.'
-         : 'Hodnota souhlasí. Dopiš výsledek v požadovaném tvaru.';
+       feedback.textContent='';
+       const heading=continuation.querySelector('strong');
+       heading.textContent=result==='form'?'Hodnota souhlasí':'Správný mezikrok';
+       direction.textContent=continuationHint(task,answer,result)+' Do pole níže napiš, co ti vyšlo, a stiskni Enter nebo Zkontrolovat.';
+       continuation.hidden=false;
        if(steps.lastElementChild?.textContent!==answer.trim()) {
          const line=document.createElement('li');
          line.textContent=answer.trim();
          steps.append(line);
-         steps.hidden=false;
        }
-       input?.focus();
-       input?.select();
+       const label=form.querySelector('label');
+       label.textContent='Další mezikrok nebo výsledek';
+       input.setAttribute('aria-describedby','step-direction hint');
+       input.value='';
+       input.focus();
        return;
      }
      if(result==='invalid') {
@@ -235,6 +243,7 @@ function exercise(mode,topic,level,game=false) {
        return;
      }
      finished=true;
+     direction.hidden=true;
      if(result==='correct') {
        counts[attempts===1?'first':'second']++;
        feedback.textContent='Správně!';

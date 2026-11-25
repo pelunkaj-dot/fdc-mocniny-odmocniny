@@ -1,3 +1,6 @@
+import {notation} from './answers.mjs?v=5';
+import {readExpression} from './expression.mjs?v=8';
+
 const ruleHints=[
  'Podívej se, co patří do základu. Druhá mocnina jsou dva stejné činitele, třetí mocnina tři.',
  'Přečti značku odmocniny. Hledej číslo, které by po umocnění dalo hodnotu pod odmocninou.',
@@ -33,4 +36,49 @@ export const milestones=[['Start',0],['První výstup',5],['Mezistanice',12],['R
 export function award(points,result,attempts,assisted) {
  if(result!=='correct') return points;
  return points+(assisted||attempts>1?1:2);
+}
+
+
+const formHints={
+ power:'Spoj mocniny se stejným základem a uprav exponenty.',
+ fraction:'Přepiš výsledek jako zlomek ve tvaru a/b.',
+ scientific:'Zapiš výsledek jako číslo od 1 do 10 (bez 10) krát mocnina deseti.',
+ radical:'Vytkni z odmocniny úplný čtverec a spoj členy se stejnou odmocninou.',
+ root:'Zapiš výsledek jako jednu odmocninu.',
+ monomial:'Spoj podobné členy a výsledek zapiš jako jeden člen.',
+ algebra:'Spoj stejné mocniny a uprav zápis do tvaru požadovaného v zadání.'
+};
+
+export function continuationHint(task,answer,result) {
+ const source=notation(answer).split('=').at(-1);
+ if(task.prompt?.includes('zaokrouhli') && result==='step') {
+   return 'Dopočítej výraz a zaokrouhli až konečný výsledek na počet míst uvedený v zadání.';
+ }
+ if(result==='form' || /[xy]/.test(source)) {
+   return formHints[task.form]??'Uprav výraz do tvaru požadovaného v zadání.';
+ }
+ let hint;
+ try {
+   readExpression(source,(kind,expression,_value,operator)=>{
+     if(hint) return;
+     if(kind==='division' && /^\d+\/\d+$/.test(expression) && expression!==source.trim()) return;
+     const pair=expression.match(/^(\d+(?:\.\d+)?)([+\-])(\d+(?:\.\d+)?)$/);
+     if(kind==='sum'&&pair) {
+       const [,left,sign,right]=pair;
+       const a=left.replace('.',','), b=right.replace('.',',');
+       hint=sign==='+'?'Sečti '+a+' a '+b+'.':'Od '+a+' odečti '+b+'.';
+       return;
+     }
+     const operation={
+       sum:operator==='-'?'Vypočítej rozdíl':'Vypočítej součet',
+       product:'Vypočítej součin',division:'Vypočítej podíl',
+       power:'Vypočítej mocninu',root:'Uprav odmocninu',cubeRoot:'Vypočítej třetí odmocninu'
+     }[kind];
+     if(!operation) return;
+     const part=expression.replace(/\*/g,' · ').replace(/\+/g,' + ')
+       .replace(/-/g,' − ').replace(/\./g,',').trim();
+     hint=operation+' '+part+'.';
+   });
+ } catch {}
+ return hint??formHints[task.form]??'Dopočítej rozepsaný výraz.';
 }

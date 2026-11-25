@@ -135,3 +135,12 @@ const reported=estimateBank.find(t=>t.expr==='√(3027)');
 assert.equal(grade(reported,'55'),'correct');
 assert.equal(grade(reported,'56'),'wrong');
 assert.equal(estimateBank.find(t=>t.expr==='∛(277)').answer,'7');
+
+
+const {continuationHint}=await import('../coach.mjs');
+const combined={form:'number',prompt:'Vyhledej druhou mocninu a odmocninu a sečti jejich hodnoty.'};
+assert.equal(continuationHint(combined,'2500+48','step'),'Sečti 2500 a 48.');
+assert.equal(continuationHint(combined,'50² + √(2304) = 2500 + 48','step'),'Sečti 2500 a 48.');
+assert.equal(continuationHint(combined,'2500-48','step'),'Od 2500 odečti 48.');
+assert.match(continuationHint(combined,'2+3^2','step'),/^Vypočítej mocninu/);
+assert.match(continuationHint({form:'scientific'},'4200','form'),/mocnina deseti/);

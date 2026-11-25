@@ -105,3 +105,6 @@ main {padding-bottom:44px}
  .power-table {margin:12px 0}
  .table-scroll {max-height:min(42dvh,320px)}
 }
+.continuation {margin:12px 0;padding:10px 12px;border:1px solid #bbdccd;border-left:3px solid #339572;border-radius:9px;background:#eaf7f0;color:#174d3c;overflow-wrap:anywhere}
+.continuation ol {margin:4px 0 8px;padding-left:1.6rem;font-variant-numeric:tabular-nums}
+.continuation p {margin:0}

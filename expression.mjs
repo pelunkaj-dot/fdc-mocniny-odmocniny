@@ -60,8 +60,8 @@ export function readExpression(source, onStep) {
    if(y!==0) nonzero.add('y');
  }
  const peek=()=>tokens[i];
- function record(kind,start,value) {
-   onStep?.(kind,tokens.slice(start,i).join(''),value);
+ function record(kind,start,value,operator) {
+   onStep?.(kind,tokens.slice(start,i).join(''),value,operator);
    return value;
  }
  const kind=token=>/^\d|^\.\d/.test(token||'')?'number':token;
@@ -123,7 +123,7 @@ export function readExpression(source, onStep) {
    while(peek()==='+'||peek()==='-') {
      const op=tokens[i++];
      for(const [key,n] of product()) addTerm(value,key,op==='+'?n:-n);
-     record('sum',start,value);
+     record('sum',start,value,op);
    }
    return value;
  }
