@@ -1,13 +1,15 @@
 import {topics, LIMIT} from './tasks.mjs';
-import {modes, practiceBank} from './practice.mjs';
+import {modes, practiceBank} from './practice.mjs?v=3';
 import {grade} from './answers.mjs';
 import {math} from './render.mjs';
+import {coachHint, milestones, award} from './coach.mjs?v=3';
 
 const demo=document.body.dataset.version==='demo';
 const root=document.querySelector('#app');
 const offer='<a class="button primary" href="https://fajndoucko.cz/fajncvicebna/">Chci plnou FajnCvičebnu</a>';
 const symbols=['(-3)^2','∛(-27)','x^2 · x^3','2^(-3)','√(72)','10^(-4)','(2 + 3)^2','(x + 3)^2'];
 const demoTopics=[0,1,2,4,5,7];
+const modeSymbols={mental:'3^2',tables:'√(2025)',calculator:'√(12,34)'};
 const storageKey='fdc-powers-v1-'+(demo?'demo':'full');
 const hints={
  number:'Zadej číslo. Můžeš použít desetinnou čárku nebo zlomek a/b.',
@@ -68,39 +70,58 @@ function nextTask(mode,topic,level) {
  return task;
 }
 
-function hub(mode=null) {
+function hub(mode=null,game=false) {
+ const gamePath=game?'/hra':'';
  const banner=demo?'<div class="notice">Demo nabízí 18 úloh celkem ve všech režimech dohromady. '+offer+'</div>':'';
  if(!mode) {
-   root.innerHTML=banner+'<h2>Jak chceš počítat?</h2><div class="grid">'+Object.entries(modes).map(([id,[title,description]])=>
-     '<section class="panel tile"><h2>'+title+'</h2><p>'+description+'</p><a class="button" href="#'+id+'">Vybrat cvičebnu</a></section>'
+   root.innerHTML='<section class="welcome"><div><h2>Procvičuj po svém</h2><p>Trénuj vlastním tempem nebo zkus výstup na vrchol. V každém režimu máš po ruce nápovědu.</p></div><a class="button primary" href="#hra">Hrát Výstup na vrchol</a></section>'+banner+'<h2>Jak chceš počítat?</h2><div class="grid">'+Object.entries(modes).map(([id,[title,description]])=>
+     '<section class="panel tile"><div class="art">'+math(modeSymbols[id])+'</div><h2>'+title+'</h2><p>'+description+'</p><a class="button" href="#'+id+'">Vybrat cvičebnu</a></section>'
    ).join('')+'</div>';
    return;
  }
+ if(mode==='hra') {
+   root.innerHTML='<nav><a href="#">← Rozcestník</a></nav><h2>Výstup na vrchol</h2><p>Vyber pomůcku a téma. Za správné odpovědi získáš body a odemkneš zastávky na výstupu.</p>'+gameCard()+
+    '<div class="grid">'+Object.entries(modes).map(([id,[title,description]])=>
+      '<section class="panel tile"><h2>'+title+'</h2><p>'+description+'</p><a class="button primary" href="#'+id+'/hra">Vybrat téma</a></section>'
+    ).join('')+'</div>';
+   return;
+ }
  const [label,description,availableTopics]=modes[mode];
- root.innerHTML=banner+'<nav><a href="#">← Způsob počítání</a></nav><h2>'+label+'</h2><p>'+description+'</p><div class="grid">'+availableTopics.map(i=>{
+ root.innerHTML=banner+'<nav><a href="#'+(game?'hra':'')+'">← Způsob počítání</a></nav><h2>'+label+(game?' · Výstup na vrchol':'')+'</h2><p>'+description+'</p><div class="grid">'+availableTopics.map(i=>{
    const available=!demo||mode!=='mental'||demoTopics.includes(i);
    return '<section class="panel tile"><div class="art">'+math(symbols[i])+'</div><h2>'+topics[i][0]+'</h2>'+
-     (available?'<a class="button" href="#'+mode+'/'+(i+1)+'/1">Procvičovat</a>':'<small>V plné verzi</small>')+'</section>';
+     (available?'<a class="button" href="#'+mode+'/'+(i+1)+'/1'+gamePath+'">'+(game?'Hrát':'Procvičovat')+'</a>':'<small>V plné verzi</small>')+'</section>';
  }).join('')+'</div>';
 }
 
-function exercise(mode,topic,level) {
+function gameCard() {
+ const points=progress.points??0;
+ const upcoming=milestones.find(([,minimum])=>points<minimum);
+ return '<section class="game-card" aria-label="Herní postup"><h2>Výstup na vrchol</h2><p><strong>'+points+' bodů</strong> · '+
+  (upcoming?'Další zastávka: '+upcoming[0]+' za '+(upcoming[1]-points)+' bodů':'Vrchol zdolán! Body můžeš sbírat dál.')+
+  '</p><progress aria-label="Postup k vrcholu" max="32" value="'+Math.min(points,32)+'"></progress><ol class="route-stops">'+
+  milestones.map(([name,minimum])=>'<li class="'+(points>=minimum?'reached':'')+'">'+(points>=minimum?'✓ ':'')+name+'</li>').join('')+
+  '</ol><small>2 body za správnou odpověď napoprvé bez nápovědy, 1 bod po nápovědě nebo na druhý pokus.</small></section>';
+}
+
+function exercise(mode,topic,level,game=false) {
+ const gamePath=game?'/hra':'';
  const [modeTitle,modeDescription]=modes[mode];
  const [title,lesson,example]=topics[topic];
  const key=mode+'/'+topic+'/'+level;
  const counts=progress.stats[key]??={first:0,second:0,missed:0};
- root.innerHTML='<nav class="row toolbar"><a href="#'+mode+'">← Výběr cvičebny</a>'+
+ root.innerHTML='<nav class="row toolbar"><a href="#'+mode+gamePath+'">← Výběr cvičebny</a>'+
    '<button id="sound" type="button"></button></nav>'+
    '<div class="layout"><section class="panel"><h2>'+title+'</h2><p class="notice"><strong>'+modeTitle+'</strong><br>'+modeDescription+'</p>'+
    '<div class="row"><label for="level">Obtížnost</label><select id="level">'+
     ['Základní','Střední','Pokročilá'].slice(0,demo?1:3).map((label,i)=>'<option value="'+i+'">'+label+'</option>').join('')+
    '</select></div><div id="practice"></div></section>'+
-   '<aside class="panel"><h2>Jak na to</h2><p>'+(mode==='mental'?lesson:modeDescription)+'</p>'+
+   '<aside class="panel">'+(game?'<div id="game">'+gameCard()+'</div>':'')+'<h2>Jak na to</h2><p>'+(mode==='mental'?lesson:modeDescription)+'</p>'+
    '<div class="notice">'+(mode==='mental'?example:mode==='tables'?'√(2025) = 45; 45^2 = 2025':'√(12,34) ≈ 3,51').split('; ').map(math).join('<br>')+'</div>'+
    '<h2>Výsledky této úrovně</h2><dl id="stats"></dl>'+(demo?offer:'')+'</aside></div>';
  const difficulty=root.querySelector('#level');
  difficulty.value=level;
- difficulty.onchange=()=>{location.hash=mode+'/'+(topic+1)+'/'+(Number(difficulty.value)+1);};
+ difficulty.onchange=()=>{location.hash=mode+'/'+(topic+1)+'/'+(Number(difficulty.value)+1)+gamePath;};
  const soundButton=root.querySelector('#sound');
  function labelSound() { soundButton.textContent='Zvuk '+(sound?'zapnutý':'vypnutý');soundButton.setAttribute('aria-pressed',String(sound)); }
  labelSound();
@@ -123,7 +144,7 @@ function exercise(mode,topic,level) {
      return;
    }
    const task=nextTask(mode,topic,level);
-   let attempts=0, finished=false;
+   let attempts=0, finished=false, assisted=false;
    const controls=task.choices?
      '<div class="row">'+task.choices.map(c=>'<button type="button" data-choice="'+c+'">'+c+'</button>').join('')+'</div>':
      '<label for="answer">Odpověď</label><input id="answer" aria-describedby="hint" autocomplete="off" maxlength="100">'+
@@ -132,8 +153,10 @@ function exercise(mode,topic,level) {
      '<p><button class="primary" type="submit">Zkontrolovat</button></p>';
    area.innerHTML=(demo?'<p class="muted">Ukázková úloha '+(progress.used+1)+' z '+LIMIT+'</p>':'')+
      '<p>'+task.prompt+'</p><div class="expression">'+math(task.expr)+'</div>'+
-     '<form>'+controls+'</form><p class="feedback" aria-live="polite"></p><div id="solution" hidden></div>'+
+     '<details class="coach"><summary>Nápověda</summary><p>'+coachHint(mode,topic,task)+'</p></details><form>'+controls+'</form><p class="feedback" aria-live="polite"></p><div id="solution" hidden></div>'+
      '<button class="primary" id="next" type="button" hidden>Další úloha</button>';
+   const coach=area.querySelector('.coach');
+   coach.ontoggle=()=>{if(coach.open) assisted=true;};
    const form=area.querySelector('form');
    const input=form.querySelector('input');
    const feedback=area.querySelector('.feedback');
@@ -156,6 +179,13 @@ function exercise(mode,topic,level) {
      if(result==='correct') {
        counts[attempts===1?'first':'second']++;
        feedback.textContent='Správně!';
+       if(game) {
+         const before=progress.points??0;
+         progress.points=award(before,result,attempts,assisted||coach.open);
+         const unlocked=milestones.filter(([,minimum])=>minimum>before&&minimum<=progress.points).at(-1);
+         feedback.textContent+=' +'+(progress.points-before)+(progress.points-before===1?' bod':' body')+'.'+(unlocked?' Odemčeno: '+unlocked[0]+'!':'');
+         root.querySelector('#game').innerHTML=gameCard();
+       }
        void play();
      } else {
        counts.missed++;
@@ -188,9 +218,10 @@ function route() {
    location.replace('#mental/'+hash);
    return;
  }
- const [mode,topicNumber,levelNumber]=hash.split('/');
+ const [mode,topicNumber,levelNumber,gameFlag]=hash.split('/');
+ if(hash==='hra') {hub('hra');return;}
  if(!Object.hasOwn(modes,mode)) {hub();return;}
- if(!topicNumber) {hub(mode);return;}
+ if(!topicNumber||topicNumber==='hra') {hub(mode,topicNumber==='hra');return;}
  const topic=Number(topicNumber)-1,level=Number(levelNumber)-1;
  if(!modes[mode][2].includes(topic)||![0,1,2].includes(level)||
      (demo && (level!==0 || (mode==='mental'&&!demoTopics.includes(topic))))) {
@@ -198,7 +229,7 @@ function route() {
    hub(mode);
    return;
  }
- exercise(mode,topic,level);
+ exercise(mode,topic,level,gameFlag==='hra');
 }
 if(document.documentElement.style.visibility!=='hidden') {
  addEventListener('hashchange',route);

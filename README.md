@@ -53,3 +53,10 @@ existujícím členském systému.
 - `style.css` navazuje na paletu výukového celku Výrazy.
 
 Aplikace nemá běhové externí závislosti. Zvuk tvoří tři tóny Web Audio.
+
+## Nápověda a hra
+
+Tlačítko Nápověda u úlohy nabídne první krok podle zadání a způsobu práce.
+Hra Výstup na vrchol odměňuje správné odpovědi body. Správná odpověď po
+nápovědě nebo na druhý pokus také posune hráče po trase. Body a odemčené
+zastávky jsou dostupné ve stejném prohlížeči i po opětovném otevření.

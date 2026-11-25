@@ -1,0 +1,31 @@
+const ruleHints=[
+ 'Podívej se, co patří do základu. Druhá mocnina jsou dva stejné činitele, třetí mocnina tři.',
+ 'Přečti značku odmocniny. Hledej číslo, které by po umocnění dalo hodnotu pod odmocninou.',
+ 'Urči nejdřív operaci mezi mocninami. U stejného základu při násobení exponenty sčítáš, při dělení odečítáš.',
+ 'Začni exponentem. Nultá mocnina nenulového základu má hodnotu 1. U záporného exponentu převrať základ.',
+ 'Hledej pod odmocninou dělitele, který je úplným čtvercem. Třeba 12 lze rozložit na 4 · 3.',
+ 'Sleduj znaménko exponentu u desítky. Kladný posouvá čárku doprava, záporný doleva.',
+ 'Najdi závorky a vyznač mocniny a odmocniny. Sčítání a odčítání nech až za těmito operacemi.',
+ 'Zkontroluj, co je uvnitř závorky a zda je exponent sudý nebo lichý. Pak porovnej obě strany rovnosti.'
+];
+
+export function coachHint(mode,topic,task) {
+ if(mode==='tables') return topic===1
+   ? 'Číslo pod odmocninou hledej ve sloupci druhých mocnin. Pokud tam přesně není, najdi nejbližší menší a větší hodnotu.'
+   : 'V tabulce vyhledej řádek podle základu mocniny. Výsledky z tabulky si zapiš a teprve pak je dosaď do výrazu.';
+ if(mode==='calculator') return 'Zadej čísla i závorky přesně podle zadání. Pokud počítáš po částech, ponech na displeji všechny číslice a zaokrouhli až na konci.';
+ if(task.prompt.startsWith('Existuje')) return 'Výsledek druhé mocniny reálného čísla je vždy nezáporný. Podívej se na znaménko pod odmocninou.';
+ if(task.prompt.includes('nesmí mít')) return 'Přemýšlej, kdy se celý výraz v základu rovná nule. V záporné mocnině by pak byla nula ve jmenovateli.';
+ if(task.prompt.includes('koeficient')) return 'Člen s proměnnou vznikne dvakrát: první člen z první závorky krát druhý z druhé, a potom obráceně.';
+ if(task.prompt.startsWith('Urči exponent')) return 'Hledej malé číslo napsané vpravo nahoře, mimo závorku kolem základu.';
+ if(topic===2 && /\)\^/.test(task.expr)) return 'U mocniny mocniny exponenty vynásob. U součinu a podílu umocni jednotlivé činitele nebo oba členy zlomku.';
+ if(topic===5 && task.prompt.includes('vědeckém')) return 'Přesuň čárku za první nenulovou číslici. Počet posunů určuje exponent desítky. Je-li ve výrazu více mocnin deseti, nejprve je spoj.';
+ return ruleHints[topic];
+}
+
+export const milestones=[['Start',0],['První výstup',5],['Mezistanice',12],['Rozhledna',21],['Vrchol',32]];
+
+export function award(points,result,attempts,assisted) {
+ if(result!=='correct') return points;
+ return points+(assisted||attempts>1?1:2);
+}

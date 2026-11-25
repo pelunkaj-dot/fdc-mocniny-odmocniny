@@ -54,3 +54,15 @@ assert.ok(practiceBank('tables',1,1).every(t=>t.expr.startsWith('√(')&&t.promp
 assert.ok(practiceBank('calculator',0,1).every(t=>t.prompt.includes('3 desetinná místa')));
 assert.deepEqual(practiceBank('tables',2,0),[]);
 console.log(modeTotal+' úloh v bankách rozdělených podle pomůcky');
+
+const {award,coachHint,milestones}=await import('../coach.mjs');
+assert.equal(award(3,'correct',1,false),5);
+assert.equal(award(3,'correct',1,true),4);
+assert.equal(award(3,'correct',2,false),4);
+assert.equal(award(3,'wrong',2,false),3);
+assert.equal(milestones.at(-1)[1],32);
+assert.match(coachHint('tables',1,{}),/nejbližší menší a větší/);
+for(const t of practiceBank('mental',0,0)) {
+ const cube=t.expr.match(/^([0-9]+)\^3/);
+ if(cube) assert.ok(Number(cube[1])<=5);
+}

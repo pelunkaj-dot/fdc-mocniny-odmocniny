@@ -15,7 +15,10 @@ const decimal=(n,d)=>cz(n/10**d);
 const mentalTopics=new Set([0,1,3,4,5,6,7]);
 
 function mental(topic,level,i) {
- const a=1+i%9, b=2+Math.floor(i/9)%9, v=Math.floor(i/81);
+ const v=Math.floor(i/81);
+ const smallCube=(topic===0||topic===1||(topic===7&&level<2)) && v%2===1;
+ const a=smallCube?2+i%4:1+i%9;
+ const b=smallCube && level===2?2+Math.floor(i/4)%4:2+Math.floor(i/9)%9;
  const c=1+v%5;
  const pair=['('+a+'/'+b+')','('+b+'/'+a+')'];
  const fraction=(x,y)=>x+'/'+y;
@@ -28,34 +31,38 @@ function mental(topic,level,i) {
    }
    const exponent=2+v%2, n=v<2?a:-a;
    if(level===1) {
-     const scale=1+Math.floor(v/2);
+     const scale=v===4?2:1;
      return task('Vypočítej.', '('+decimal(n,scale)+')^'+exponent+(v%2?' + ':' − ')+decimal(b,scale),Number(((n/10**scale)**exponent+(v%2?1:-1)*b/10**scale).toFixed(scale*exponent)),'Umocni číslo v závorce. Pak srovnej řády při sčítání nebo odčítání.');
    }
-   return task('Vypočítej.',pair[0]+'^'+exponent+(v>=2?' + ':' − ')+fraction(1,b**exponent),
-     fraction(a**exponent+(v>=2?1:-1),b**exponent),'Umocni čitatele a jmenovatele. Výsledné zlomky mají společného jmenovatele.');
+   const add=v>=2?1:-1, numerator=v===5?-a:a;
+   return task('Vypočítej.','('+numerator+'/'+b+')^'+exponent+(add>0?' + ':' − ')+fraction(1,b**exponent),
+     fraction(numerator**exponent+add,b**exponent),'Umocni čitatele a jmenovatele. Výsledné zlomky mají společného jmenovatele.');
  }
  case 1: {
    const exponent=2+v%2, symbol=exponent===2?'√':'∛';
-   if(level===0) return task('Vypočítej.',symbol+'('+(v===3?-(a**exponent):a**exponent)+') '+(v>=2?'−':'+')+' '+b,
-      (v===3?-a:a)+(v>=2?-b:b),'Najdi číslo, jehož '+exponent+'. mocninou je číslo pod odmocninou. Pak dokonči výpočet.');
+   const sign=v===3||v===5?-1:1;
+   const step=v===5?2:1;
+   if(level===0) return task('Vypočítej.',symbol+'('+(sign*a**exponent)+') '+(v>=2?'−':'+')+' '+b,
+      sign*a+(v>=2?-b:b),'Najdi číslo, jehož '+exponent+'. mocninou je číslo pod odmocninou. Pak dokonči výpočet.');
    const radicand=level===1?decimal(a**exponent,exponent):fraction(a**exponent,b**exponent);
-   return task('Vypočítej.',symbol+'('+(v>=2&&exponent===3?'−':'')+radicand+') '+(v>=2?'−':'+')+' '+(level===1?decimal(b,1):fraction(1,b)),
-     level===1?Number((((v===3?-a:a)+(v>=2?-b:b))/10).toFixed(1)):fraction((v===3?-a:a)+(v>=2?-1:1),b),
+   return task('Vypočítej.',symbol+'('+(sign<0?'−':'')+radicand+') '+(v>=2?'−':'+')+' '+(level===1?decimal(b,1):fraction(step,b)),
+     level===1?Number(((sign*a+(v>=2?-b:b))/10).toFixed(1)):fraction(sign*a+(v>=2?-step:step),b),
      level===1?'Odmocni desetinné číslo a pak dokonči sčítání nebo odčítání.':'Odmocni čitatele i jmenovatele a pak dokonči sčítání nebo odčítání.');
  }
  case 3: {
    const e=1+v%2, offset=level===0?b:level===1?-b:b+c;
-   if(level===2 && v%3===0) return task('Kterou hodnotu nesmí mít x?', '(x − '+(a+10*b+100*v)+')^(-'+e+')',a+10*b+100*v,'Základ záporné mocniny nesmí být nula.');
+   if(level===2 && v%3===0) return task('Kterou hodnotu nesmí mít x?', '(x − '+(a+10*(b-2))+')^(-'+e+')',a+10*(b-2),'Základ záporné mocniny nesmí být nula.');
    const term=(offset<0?' − ':' + ')+Math.abs(offset)+'/'+a**e;
    const value=v>=2 ? a**e+offset : offset+(level===1&&e===1?-1:1);
    return task('Vypočítej jako zlomek nebo číslo.',(v>=2?'('+a+'^0)':(level===1?'(−'+a+')':a)+'^(-'+e+')')+term,
       fraction(value,a**e),'Nultá mocnina nenulového čísla je 1. Záporný exponent převrací základ. Nakonec použij společného jmenovatele.');
  }
  case 4: {
-   const r=[2,3,5,6,7][v%5], other=[3,5,2,5,2][v%5];
-   if(level===1 && v%2===0) return task('Vypočítej podíl odmocnin.',root(a*a*r)+' : '+root(r)+' + '+b,a+b,'Podíl odmocnin je '+a+'. Potom přičti '+b+'.');
-   const coef=level===2 ? a+b : a*b;
-   const expression=level===2?root(a*a*r)+' + '+root(b*b*r):root(a*a*r)+' · '+root(b*b*other);
+   const r=[2,3,5,6,7,10][v], other=[3,5,2,5,2,3][v];
+   const factor=2+a%4;
+   if(level===1 && v%2===0) return task('Vypočítej podíl odmocnin.',root(factor*factor*r)+' : '+root(r)+' + '+b,factor+b,'Podíl odmocnin je '+factor+'. Potom přičti '+b+'.');
+   const coef=level===2 ? factor+b : factor*b;
+   const expression=level===2?root(factor*factor*r)+' + '+b+root(r):root(factor*factor*r)+' · '+(b+root(other));
    const radicand=level===2?r:r*other;
    return {...task('Částečně odmocni a zjednoduš.',expression,coef+'√('+radicand+')',
      level===2?'Vytkni úplné čtverce a sečti koeficienty.':'Vytkni úplné čtverce a vynásob zbylé odmocniny.'),form:'radical'};
@@ -125,7 +132,7 @@ export function practiceBank(mode,topic,level) {
  if(!modes[mode]?.[2].includes(topic)) return [];
  if(mode==='mental' && !mentalTopics.has(topic)) return bank(topic,level);
  const generate={mental,tables,calculator}[mode];
- const entries=Array.from({length:mode==='mental'?425:255},(_,i)=>generate(topic,level,i));
+ const entries=Array.from({length:mode==='mental'?486:255},(_,i)=>generate(topic,level,i));
  if(mode==='mental' && topic===1 && level===0) {
    for(let i=0;i<5;i++) entries.push(makeTask(1,0,i*5));
  }

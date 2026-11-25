@@ -40,3 +40,30 @@ input {width:100%;min-height:48px;border:2px solid var(--accent);border-radius:1
 dt {font-weight:650}
 dd {margin:0 0 10px}
 @media(max-width:680px) {.layout {grid-template-columns:1fr} .panel {padding:14px}}
+
+:root {--bg:#eef3fa;--ink:#182941;--accent:#204ebb;--soft:#eaf0fe}
+body {background:radial-gradient(ellipse at 100% 0,#dceee8,transparent 45rem),var(--bg)}
+header {background:linear-gradient(118deg,#102342,#203e76 64%,#176767);position:relative;overflow:hidden}
+header div {padding-block:30px;position:relative;z-index:1}
+header::after {content:"";position:absolute;right:2%;top:-7rem;width:23rem;height:23rem;border:1px solid #ffffff35;border-radius:50%;box-shadow:0 0 0 2.4rem #ffffff0b,0 0 0 5rem #ffffff08;pointer-events:none}
+header h1 {font-weight:800;letter-spacing:-.045em}
+main {padding-bottom:44px}
+.welcome {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:clamp(15px,3vw,26px);border-radius:20px;background:#fff;border:1px solid #cbdbeb;box-shadow:0 12px 30px #29496c12;margin-bottom:15px}
+.welcome p {margin:.5em 0;color:var(--muted)}
+.tile {padding:14px;border-color:#d2dfed;gap:13px}
+.tile p {margin:0;color:var(--muted)}
+.tile .art {min-height:118px;font-size:2.1rem;background-image:radial-gradient(circle at 74% 24%,#ffffff26 0 8%,transparent 8.5%),repeating-linear-gradient(135deg,#ffffff0d 0 1px,transparent 1px 16px),linear-gradient(135deg,#1d3f79,#2868a4)}
+.tile:nth-child(3n+2) .art {background-image:repeating-linear-gradient(130deg,#ffffff12 0 1px,transparent 1px 14px),linear-gradient(135deg,#3c2c73,#7650b4)}
+.tile:nth-child(3n) .art {background-image:radial-gradient(circle at 75% 25%,#ffffff29 0 13%,transparent 13.5%),linear-gradient(135deg,#124d56,#248579)}
+.expression {background:linear-gradient(135deg,#edf1ff,#e7f6f4);border:1px solid #d4e3ef;padding:20px 12px}
+.coach {margin:12px 0 16px;padding:4px 12px;background:#fff3dc;border:1px solid #f0d8a5;border-radius:12px;color:#593c11}
+.coach summary {min-height:36px;padding:6px 0;font-weight:750;cursor:pointer}
+.coach p {margin:0 0 10px}
+.game-card {padding:16px;background:linear-gradient(150deg,#142b48,#174e51);border-radius:14px;color:#fff;margin:0 0 16px}
+.game-card h2 {margin:0 0 8px}
+.game-card p {margin:4px 0 8px}
+.game-card small {color:#deeee9}
+.game-card progress {width:100%;height:13px;accent-color:#7ee4ad}
+.route-stops {display:grid;gap:6px;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));list-style:none;padding:0;margin:10px 0}
+.route-stops li {font-size:.82rem;border:1px solid #a1cfc570;border-radius:8px;padding:5px 8px}
+.route-stops .reached {background:#c9f1dd;color:#123d35;font-weight:750}
