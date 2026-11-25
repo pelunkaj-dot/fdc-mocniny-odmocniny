@@ -2,7 +2,7 @@ import {topics, LIMIT} from './tasks.mjs';
 import {modes, practiceBank} from './practice.mjs?v=7';
 import {grade} from './answers.mjs?v=5';
 import {math} from './render.mjs';
-import {coachHint, continuationHint, milestones, award} from './coach.mjs?v=8';
+import {coachHint, continuationHint, milestones, award} from './coach.mjs?v=8.1';
 import {customExercise} from './tutor.mjs?v=5';
 import {createPowerTable} from './power-table.mjs';
 

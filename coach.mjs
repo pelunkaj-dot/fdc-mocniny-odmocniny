@@ -54,7 +54,7 @@ export function continuationHint(task,answer,result) {
  if(task.prompt?.includes('zaokrouhli') && result==='step') {
    return 'Dopočítej výraz a zaokrouhli až konečný výsledek na počet míst uvedený v zadání.';
  }
- if(result==='form' || /[xy]/.test(source)) {
+ if(result==='form' || task.form==='radical' || task.form==='root' || /[xy]/.test(source)) {
    return formHints[task.form]??'Uprav výraz do tvaru požadovaného v zadání.';
  }
  let hint;

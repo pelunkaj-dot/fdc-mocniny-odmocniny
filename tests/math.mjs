@@ -144,3 +144,4 @@ assert.equal(continuationHint(combined,'50² + √(2304) = 2500 + 48','step'),'S
 assert.equal(continuationHint(combined,'2500-48','step'),'Od 2500 odečti 48.');
 assert.match(continuationHint(combined,'2+3^2','step'),/^Vypočítej mocninu/);
 assert.match(continuationHint({form:'scientific'},'4200','form'),/mocnina deseti/);
+assert.match(continuationHint({form:'radical'},'√(36·2)','step'),/^Vytkni/);
