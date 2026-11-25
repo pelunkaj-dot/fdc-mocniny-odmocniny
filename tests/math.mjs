@@ -50,7 +50,7 @@ for(const [mode,[,,list]] of Object.entries(modes)) {
    modeTotal+=tasks.length;
  }
 }
-assert.ok(practiceBank('tables',1,1).every(t=>t.expr.startsWith('√(')&&t.prompt.includes('těsně pod')));
+assert.ok(practiceBank('tables',1,1).every(t=>/^[√∛]\(/.test(t.expr)&&t.prompt.includes('těsně pod')));
 assert.ok(practiceBank('calculator',0,1).every(t=>t.prompt.includes('3 desetinná místa')));
 assert.deepEqual(practiceBank('tables',2,0),[]);
 console.log(modeTotal+' úloh v bankách rozdělených podle pomůcky');
@@ -107,3 +107,16 @@ const algebra={form:'algebra',expr:'(xy)^3',answer:'x^3y^3'};
 assert.equal(grade(algebra,'y³x³'),'correct');
 assert.equal(grade(algebra,'(xy)·(xy)·(xy)'),'step');
 assert.equal(grade(algebra,'x³y³ + 1'),'wrong');
+
+
+const {findTableRows}=await import('../power-table.mjs');
+assert.deepEqual(findTableRows(0,'45'),{kind:'exact',rows:[45]});
+assert.deepEqual(findTableRows(1,'2 025'),{kind:'exact',rows:[45]});
+assert.deepEqual(findTableRows(2,'258'),{kind:'between',rows:[6,7]});
+assert.deepEqual(findTableRows(1,'2050'),{kind:'between',rows:[45,46]});
+assert.deepEqual(findTableRows(0,'3,5'),{kind:'between',rows:[3,4]});
+assert.deepEqual(findTableRows(1,'0'),{kind:'below',rows:[1]});
+assert.deepEqual(findTableRows(2,'1 000 000'),{kind:'exact',rows:[100]});
+assert.deepEqual(findTableRows(2,'1 000 001'),{kind:'above',rows:[100]});
+assert.deepEqual(findTableRows(2,'1 00'),{kind:'invalid',rows:[]});
+assert.ok(practiceBank('tables',1,1).some(t=>t.expr==='∛(258)'&&t.answer==='6'));

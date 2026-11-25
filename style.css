@@ -74,3 +74,34 @@ main {padding-bottom:44px}
 .custom form .row {margin:12px 0}
 .custom #custom-output button {margin-top:8px}
 .custom #custom-output li {margin-block:5px}
+
+.power-table {background:#fffcf3;color:#293443;border:1px solid #dfd7c6;border-radius:12px;margin:0 0 16px}
+.power-table>summary {font-weight:750;cursor:pointer;min-height:44px;padding:10px 12px}
+.power-table[open]>summary {border-bottom:1px solid #e5ddcd}
+.power-table-content {padding:0 10px 10px}
+.power-table-content>p {font-size:.88rem;margin:10px 0}
+.table-search {margin:0 0 10px}
+.table-search>summary {cursor:pointer;color:#204b92;font-weight:650;min-height:36px;padding-block:6px}
+.table-search .row {margin-top:8px}
+.table-fields {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:8px}
+.table-fields label {display:grid;gap:4px;font-size:.86rem;font-weight:650;min-width:0}
+.table-fields select,.table-fields input {width:100%;min-width:0;font-size:1rem;padding:6px}
+.table-status {margin:8px 0;font-size:.88rem}
+.table-status:empty {display:none}
+.table-scroll {max-height:clamp(220px,44dvh,420px);overflow:auto;border:1px solid #dfd7c6;border-radius:8px;scrollbar-color:#a8a29b #f6f1e5}
+.power-table table {width:100%;border-spacing:0;table-layout:fixed;font-variant-numeric:tabular-nums;font-size:.95rem}
+.power-table caption {padding:5px 8px;text-align:left;color:#526075;font-size:.83rem;background:#fcf7ea}
+.power-table thead th {position:sticky;top:0;z-index:1;text-align:right;background:#e5e8ee;border-bottom:1px solid #aeb8c7}
+.power-table th,.power-table td {padding:5px 10px;text-align:right;border-bottom:1px solid #eae3d3}
+.power-table th+th,.power-table td {border-left:1px solid #e6dfd2}
+.power-table thead th[data-column="1"] {color:#204a8a;background:#deeafd}
+.power-table thead th[data-column="2"] {color:#62408b;background:#ede3fa}
+.power-table tbody tr:nth-child(even) {background:#f8f3e8}
+.power-table tbody th {font-weight:650}
+.power-table .table-marker {visibility:hidden;color:#754900;margin-right:.35em}
+.power-table tbody tr.table-match {background:#ffe4a0;color:#432b08}
+.power-table .table-match .table-marker {visibility:visible}
+@media(max-width:680px) {
+ .power-table {margin:12px 0}
+ .table-scroll {max-height:min(42dvh,320px)}
+}

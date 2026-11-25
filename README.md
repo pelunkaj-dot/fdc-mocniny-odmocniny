@@ -70,3 +70,9 @@ Na rozcestníku **Úlohy s proměnnými** jsou samostatné banky s x a y.
 výrazu s x a y. Pomůcka je dostupná i v demu. Podporuje číselné odmocniny,
 celočíselné exponenty a dělení jednočlenem. Výpočty probíhají přímo v
 prohlížeči. Výstup s desetinnými hodnotami může být zaokrouhlený.
+
+V režimu **S tabulkami** je u úlohy tabulka druhých a třetích mocnin
+pro základy 1 až 100. Na širších obrazovkách se otevírá vedle úlohy,
+na telefonu se rozbaluje pod zadáním. Žák může listovat nebo vybrat
+sloupec a vlastní hledanou hodnotu. Vyhledávání označí přesný výskyt
+nebo dva sousední řádky.

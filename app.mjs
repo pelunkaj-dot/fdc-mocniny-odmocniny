@@ -1,12 +1,16 @@
 import {topics, LIMIT} from './tasks.mjs';
-import {modes, practiceBank} from './practice.mjs?v=5';
+import {modes, practiceBank} from './practice.mjs?v=6';
 import {grade} from './answers.mjs?v=5';
 import {math} from './render.mjs';
-import {coachHint, milestones, award} from './coach.mjs?v=3';
+import {coachHint, milestones, award} from './coach.mjs?v=6';
 import {customExercise} from './tutor.mjs?v=5';
+import {createPowerTable} from './power-table.mjs';
 
 const demo=document.body.dataset.version==='demo';
 const root=document.querySelector('#app');
+const tableMedia=matchMedia('(max-width: 680px)');
+let mountPowerTable;
+tableMedia.addEventListener('change',()=>mountPowerTable?.());
 const offer='<a class="button primary" href="https://fajndoucko.cz/fajncvicebna/">Chci plnou FajnCvičebnu</a>';
 const symbols=['(-3)^2','∛(-27)','x^2 · x^3','2^(-3)','√(72)','10^(-4)','(2 + 3)^2','(x + 3)^2'];
 const demoTopics=[0,1,2,4,5,7];
@@ -111,6 +115,8 @@ function exercise(mode,topic,level,game=false) {
  const [modeTitle,modeDescription]=modes[mode];
  const [title,lesson,example]=topics[topic];
  const schoolWork=mode==='mental'||mode==='algebra';
+ const table=mode==='tables'?createPowerTable():null;
+ const tableSlot=table?'<div id="table-inline"></div>':'';
  const key=mode+'/'+topic+'/'+level;
  const counts=progress.stats[key]??={first:0,second:0,missed:0};
  root.innerHTML='<nav class="row toolbar"><a href="#'+mode+gamePath+'">← Výběr cvičebny</a>'+
@@ -119,7 +125,7 @@ function exercise(mode,topic,level,game=false) {
    '<div class="row"><label for="level">Obtížnost</label><select id="level">'+
     ['Základní','Střední','Pokročilá'].slice(0,demo?1:3).map((label,i)=>'<option value="'+i+'">'+label+'</option>').join('')+
    '</select></div><div id="practice"></div></section>'+
-   '<aside class="panel">'+(game?'<div id="game">'+gameCard()+'</div>':'')+'<h2>Jak na to</h2><p>'+(schoolWork?lesson:modeDescription)+'</p>'+
+   '<aside class="panel">'+(table?'<div id="table-desktop"></div>':'')+(game?'<div id="game">'+gameCard()+'</div>':'')+'<h2>Jak na to</h2><p>'+(schoolWork?lesson:modeDescription)+'</p>'+
    '<div class="notice">'+(schoolWork?example:mode==='tables'?'√(2025) = 45; 45^2 = 2025':'√(12,34) ≈ 3,51').split('; ').map(math).join('<br>')+'</div>'+
    '<h2>Výsledky této úrovně</h2><dl id="stats"></dl>'+(demo?offer:'')+'</aside></div>';
  const difficulty=root.querySelector('#level');
@@ -139,11 +145,39 @@ function exercise(mode,topic,level,game=false) {
      (total?Math.round(100*correct/total)+' %':'—')+'</dd>';
  }
  const area=root.querySelector('#practice');
+ const scroll=table?.querySelector('.table-scroll');
+ let tablePosition=0;
+ let wasNarrow=null;
+ if(table) mountPowerTable=()=>{
+   const narrow=tableMedia.matches;
+   const target=root.querySelector(narrow?'#table-inline':'#table-desktop');
+   if(!target||target===table.parentNode) return;
+   if(table.isConnected&&table.open) tablePosition=scroll.scrollTop;
+   if(narrow!==wasNarrow) {
+     table.open=!narrow;
+     wasNarrow=narrow;
+   }
+   target.append(table);
+   if(table.open) scroll.scrollTop=tablePosition;
+ };
+ if(table) {
+   table.addEventListener('toggle',()=>{
+     if(table.open) scroll.scrollTop=tablePosition;
+   });
+   scroll.addEventListener('scroll',()=>{
+     if(table.open&&table.isConnected&&scroll.clientHeight) tablePosition=scroll.scrollTop;
+   });
+ }
+
+
 
  function renderTask(focus=false) {
    stats();
+   // Preserve the same table and its scroll position while replacing the exercise.
+   if(tableMedia.matches&&table?.isConnected&&table.open) tablePosition=scroll.scrollTop;
    if(demo&&progress.used>=LIMIT) {
-     area.innerHTML='<div class="notice"><h3>Demo je dokončeno</h3><p>Vyčerpal jsi všech '+LIMIT+' ukázkových úloh.</p>'+offer+'</div>';
+     area.innerHTML='<div class="notice"><h3>Demo je dokončeno</h3><p>Vyčerpal jsi všech '+LIMIT+' ukázkových úloh.</p>'+offer+'</div>'+tableSlot;
+     mountPowerTable?.();
      return;
    }
    const task=nextTask(mode,topic,level);
@@ -155,10 +189,11 @@ function exercise(mode,topic,level,game=false) {
      '<div class="row" id="keys" aria-label="Matematické znaky">'+['−',',','/','^','√(',')','×','x','y'].map(c=>'<button type="button" data-key="'+c+'">'+c+'</button>').join('')+'</div>'+
      '<p><button class="primary" type="submit">Zkontrolovat</button></p>';
    area.innerHTML=(demo?'<p class="muted">Ukázková úloha '+(progress.used+1)+' z '+LIMIT+'</p>':'')+
-     '<p>'+task.prompt+'</p><div class="expression">'+math(task.expr)+'</div>'+
+     '<p>'+task.prompt+'</p><div class="expression">'+math(task.expr)+'</div>'+tableSlot+
      (task.condition?'<p class="muted">Podmínka '+math(task.condition)+'</p>':'')+
-     '<details class="coach"><summary>Nápověda</summary><p>'+coachHint(mode,topic,task)+'</p></details><form>'+controls+'</form><p class="feedback" aria-live="polite"></p><div id="solution" hidden></div>'+
+     '<details class="coach"><summary>Nápověda</summary><p>'+coachHint(mode,topic,task)+'</p></details><form>'+controls+'</form><ol id="steps" class="steps" aria-label="Správné mezikroky" hidden></ol><p class="feedback" aria-live="polite"></p><div id="solution" hidden></div>'+
      '<button class="primary" id="next" type="button" hidden>Další úloha</button>';
+   mountPowerTable?.();
    const coach=area.querySelector('.coach');
    coach.ontoggle=()=>{if(coach.open) assisted=true;};
    const form=area.querySelector('form');
@@ -237,6 +272,7 @@ function exercise(mode,topic,level,game=false) {
 }
 
 function route() {
+ mountPowerTable=undefined;
  const hash=location.hash.slice(1);
  if(/^([1-8])\/([1-3])$/.test(hash)) {
    location.replace('#mental/'+hash);

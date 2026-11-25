@@ -10,9 +10,12 @@ const ruleHints=[
 ];
 
 export function coachHint(mode,topic,task) {
- if(mode==='tables') return topic===1
-   ? 'Číslo pod odmocninou hledej ve sloupci druhých mocnin. Pokud tam přesně není, najdi nejbližší menší a větší hodnotu.'
-   : 'V tabulce vyhledej řádek podle základu mocniny. Výsledky z tabulky si zapiš a teprve pak je dosaď do výrazu.';
+ if(mode==='tables') {
+   const column=task.expr?.includes('∛')||/\^3/.test(task.expr??'')?'třetích':'druhých';
+   return topic===1
+     ? 'Číslo pod odmocninou hledej ve sloupci '+column+' mocnin. Pokud tam přesně není, najdi nejbližší menší a větší hodnotu.'
+     : 'V tabulce vyhledej řádek podle základu mocniny. Použij sloupec '+column+' mocnin a nalezenou hodnotu dosaď do výrazu.';
+ }
  if(mode==='calculator') return 'Zadej čísla i závorky přesně podle zadání. Pokud počítáš po částech, ponech na displeji všechny číslice a zaokrouhli až na konci.';
  if(task.prompt.startsWith('Existuje')) return 'Výsledek druhé mocniny reálného čísla je vždy nezáporný. Podívej se na znaménko pod odmocninou.';
  if(task.prompt.includes('nesmí mít')) return 'Přemýšlej, kdy se celý výraz v základu rovná nule. V záporné mocnině by pak byla nula ve jmenovateli.';

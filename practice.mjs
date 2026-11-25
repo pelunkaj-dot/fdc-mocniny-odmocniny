@@ -3,7 +3,7 @@ import {algebraBank} from './algebra.mjs';
 
 export const modes = {
  mental: ['Zpaměti / bez pomůcek','Počítej zpaměti nebo si zapiš mezikrok na papír. Úlohy využívají malé hodnoty, známé mocniny a pravidla pro úpravu výrazů.',[0,1,2,3,4,5,6,7]],
- tables: ['S tabulkami','Použij tabulku druhých mocnin přirozených čísel od 1 do 100. Výsledek vyhledej nebo porovnej dva sousední řádky.',[0,1,6]],
+ tables: ['S tabulkami','Použij sloupce druhých a třetích mocnin pro základy od 1 do 100. Hodnotu vyhledej nebo porovnej dva sousední řádky.',[0,1,6]],
  calculator: ['S kalkulačkou','Použij kalkulačku a zaokrouhli až konečný výsledek. Počet desetinných míst je u každé úlohy uvedený.',[0,1,6]],
  algebra: ['Úlohy s proměnnými','Počítej s x a y. Podmínky, například x ≠ 0, najdeš přímo u zadání.',[2,0,3,6]],
 };
@@ -136,6 +136,27 @@ export function practiceBank(mode,topic,level) {
  if(mode==='mental' && !mentalTopics.has(topic)) return bank(topic,level);
  const generate={mental,tables,calculator}[mode];
  const entries=Array.from({length:mode==='mental'?486:255},(_,i)=>generate(topic,level,i));
+ if(mode==='tables' && (topic===0||topic===1)) {
+   for(let n=6;n<=30;n++) for(let offset=1;offset<=3;offset++) {
+     const cube=n**3, next=(n+1)**3;
+     if(topic===0) {
+       const sign=level===0?1:-1;
+       const base=sign<0?'(−'+n+')':n;
+       const add=level===2?-offset:offset;
+       entries.push(task('Vyhledej třetí mocninu a dokonči výpočet.',
+        cubed(base)+(add<0?' − ':' + ')+offset,sign*cube+add,
+        'Ve sloupci n³ najdeš '+cube+'. Při umocnění záporného základu na třetí zůstane znaménko záporné.'));
+     } else if(level===0 && offset===1) {
+       entries.push(task('Najdi v tabulce třetí odmocninu.','∛('+cube+')',n,
+        'Číslo '+cube+' je ve sloupci n³ v řádku se základem '+n+'.'));
+     } else {
+       const radicand=cube+offset*14;
+       entries.push(task(level===2?'Najdi celé číslo těsně nad třetí odmocninou.':'Najdi celé číslo těsně pod třetí odmocninou.',
+        '∛('+radicand+')',level===2?n+1:n,
+        'Ve sloupci n³ najdeš sousední hodnoty '+cube+' a '+next+'. Číslo '+radicand+' leží mezi nimi.'));
+     }
+   }
+ }
  if(mode==='mental' && topic===1 && level===0) {
    for(let i=0;i<5;i++) entries.push(makeTask(1,0,i*5));
  }
