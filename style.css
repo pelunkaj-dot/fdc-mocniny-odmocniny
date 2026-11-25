@@ -70,3 +70,7 @@ main {padding-bottom:44px}
 .steps {margin:12px 0;padding:10px 12px 10px 34px;border-left:3px solid #339572;background:#eaf7f0;border-radius:8px;overflow-wrap:anywhere}
 .feedback[data-status=step],.feedback[data-status=form] {color:var(--ok)}
 .feedback[data-status=invalid] {color:var(--bad)}
+.custom {max-width:760px;margin:14px 0}
+.custom form .row {margin:12px 0}
+.custom #custom-output button {margin-top:8px}
+.custom #custom-output li {margin-block:5px}

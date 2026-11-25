@@ -1,9 +1,11 @@
 import {bank, makeTask} from './tasks.mjs';
+import {algebraBank} from './algebra.mjs';
 
 export const modes = {
  mental: ['Zpaměti / bez pomůcek','Počítej zpaměti nebo si zapiš mezikrok na papír. Úlohy využívají malé hodnoty, známé mocniny a pravidla pro úpravu výrazů.',[0,1,2,3,4,5,6,7]],
  tables: ['S tabulkami','Použij tabulku druhých mocnin přirozených čísel od 1 do 100. Výsledek vyhledej nebo porovnej dva sousední řádky.',[0,1,6]],
- calculator: ['S kalkulačkou','Použij kalkulačku a zaokrouhli až konečný výsledek. Počet desetinných míst je u každé úlohy uvedený.',[0,1,6]]
+ calculator: ['S kalkulačkou','Použij kalkulačku a zaokrouhli až konečný výsledek. Počet desetinných míst je u každé úlohy uvedený.',[0,1,6]],
+ algebra: ['Úlohy s proměnnými','Počítej s x a y. Podmínky, například x ≠ 0, najdeš přímo u zadání.',[2,0,3,6]],
 };
 
 const task=(prompt,expr,answer,why)=>({prompt,expr,answer:String(answer).replace('.',','),why,form:'number'});
@@ -130,6 +132,7 @@ function calculator(topic,level,i) {
 
 export function practiceBank(mode,topic,level) {
  if(!modes[mode]?.[2].includes(topic)) return [];
+ if(mode==='algebra') return algebraBank(topic,level);
  if(mode==='mental' && !mentalTopics.has(topic)) return bank(topic,level);
  const generate={mental,tables,calculator}[mode];
  const entries=Array.from({length:mode==='mental'?486:255},(_,i)=>generate(topic,level,i));

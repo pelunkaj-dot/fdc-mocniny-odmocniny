@@ -1,6 +1,6 @@
-import {readExpression, sameValue} from './expression.mjs?v=4';
+import {readExpression, sameValue} from './expression.mjs?v=5';
 
-const notation = value => String(value).toLowerCase().trim()
+export const notation = value => String(value).toLowerCase().trim()
  .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+/g, s=>'^('+[...s].map(c=>'0123456789-'['⁰¹²³⁴⁵⁶⁷⁸⁹⁻'.indexOf(c)]).join('')+')')
  .replace(/[−–]/g,'-').replace(/[×·⋅]/g,'*').replace(/[÷:]/g,'/')
  .replace(/\*\*/g,'^').replace(/,/g,'.');
@@ -54,6 +54,13 @@ function monomial(s) {
  if(!m) return NaN;
  return m[1]==='-'?-1:Number(m[1] && m[1]!=='+'?m[1]:1);
 }
+const algebraTerm='(?:\\d+(?:\\.\\d+)?)?(?:\\*?[xy](?:\\^[1-9]\\d*)?){1,2}';
+const algebraForm=new RegExp('^[+-]?(?:'+algebraTerm+'|'+scalar+')(?:/(?:'+algebraTerm+'|'+scalar+'))?$');
+function simpleAlgebra(s,target) {
+ if(target==='0') return s==='0';
+ if(s.includes('/')!==target.includes('/') || !algebraForm.test(s)) return false;
+ return s.split('/').every(part=>new Set(part.match(/[xy]/g)??[]).size===(part.match(/[xy]/g)??[]).length);
+}
 const equal=(a,b)=>Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=1e-12*Math.max(1e-9,Math.abs(a),Math.abs(b));
 
 function finalForm(task,s,target) {
@@ -83,6 +90,7 @@ function finalForm(task,s,target) {
    if(task.form==='root') return /^(?:√|sqrt)/.test(s)?'correct':'form';
    return given.squareFree?'correct':'form';
  }
+ case 'algebra': return s===target?'correct':'wrong';
  case 'monomial': return equal(monomial(s),monomial(target))?'correct':'wrong';
  default: return equal(number(s),number(target))?'correct':'wrong';
  }
@@ -95,7 +103,7 @@ export function grade(task,input) {
  if(/\d\s+\d/.test(source)) return 'invalid';
  const parts=source.split('=').map(part=>part.trim());
  const target=notation(task.answer);
- const allowedVariables=new Set(target.match(/[xy]/g)??[]);
+ const allowedVariables=new Set((target+(task.form==='algebra'?task.expr??'':'')).match(/[xy]/g)??[]);
  const allowedNonzero=new Set();
  for(const expression of [target,notation(task.expr??'')]) {
    try {for(const symbol of readExpression(expression).nonzero) allowedNonzero.add(symbol);} catch {}
@@ -112,7 +120,7 @@ export function grade(task,input) {
    try {value=readExpression(part);} catch {return 'invalid';}
    try {
      if([...value.nonzero].every(symbol=>allowedNonzero.has(symbol)) && sameValue(value,readExpression(target))) {
-       outcome='step';
+       outcome=task.form==='algebra'&&simpleAlgebra(compact(part),compact(target))?'correct':'step';
        continue;
      }
      // A calculator expression may still need rounding to the requested precision.

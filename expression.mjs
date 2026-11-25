@@ -40,7 +40,7 @@ function power(base,exponent) {
  return result;
 }
 
-export function readExpression(source) {
+export function readExpression(source, onStep) {
  const pattern=/\s+|(?:\d+(?:\.\d+)?|\.\d+)(?:e[+-]?\d+)?|sqrt|cbrt|[xy√∛()+*/^\-]/gy;
  const tokens=[];
  for(let cursor=0;cursor<source.length;) {
@@ -60,13 +60,17 @@ export function readExpression(source) {
    if(y!==0) nonzero.add('y');
  }
  const peek=()=>tokens[i];
+ function record(kind,start,value) {
+   onStep?.(kind,tokens.slice(start,i).join(''),value);
+   return value;
+ }
  const kind=token=>/^\d|^\.\d/.test(token||'')?'number':token;
  function need(token) {
    if(peek()!==token) throw Error();
    i++;
  }
  function atom() {
-   const token=tokens[i++];
+   const start=i, token=tokens[i++];
    if(token==='(') {const value=sum();need(')');return value;}
    if(kind(token)==='number') {
      const n=Number(token);
@@ -76,14 +80,14 @@ export function readExpression(source) {
    if(token==='x'||token==='y') return new Map([[token==='x'?'1,0':'0,1',1]]);
    if(['√','∛','sqrt','cbrt'].includes(token)) {
      const value=scalar(atom());
-     if(token==='∛'||token==='cbrt') return constant(Math.cbrt(value));
+     if(token==='∛'||token==='cbrt') return record('cubeRoot',start,constant(Math.cbrt(value)));
      if(value<0) throw Error();
-     return constant(Math.sqrt(value));
+     return record('root',start,constant(Math.sqrt(value)));
    }
    throw Error();
  }
  function unary() {
-   const op=peek();
+   const start=i, op=peek();
    if(op==='+'||op==='-') {
      i++;
      const value=unary();
@@ -93,10 +97,14 @@ export function readExpression(source) {
    if(peek()!=='^') return value;
    i++;
    const exponent=unary();
-   if(scalar(exponent)<0) requireNonzeroVariables(value);
-   return power(value,exponent);
+   if(scalar(exponent)<=0) {
+     if(value.size!==1) throw Error();
+     requireNonzeroVariables(value);
+   }
+   return record('power',start,power(value,exponent));
  }
  function product() {
+   const start=i;
    let value=unary();
    while(true) {
      const op=peek();
@@ -104,17 +112,18 @@ export function readExpression(source) {
        i++;
        const right=unary();
        if(op==='/') requireNonzeroVariables(right);
-       value=op==='/'?divide(value,right):combine(value,right,1);
+       value=record(op==='/'?'division':'product',start,op==='/'?divide(value,right):combine(value,right,1));
      } else if(['x','y','(','√','∛','sqrt','cbrt'].includes(op)) {
-       value=combine(value,unary(),1);
+       value=record('product',start,combine(value,unary(),1));
      } else return value;
    }
  }
  function sum() {
-   const value=product();
+   const start=i, value=product();
    while(peek()==='+'||peek()==='-') {
      const op=tokens[i++];
      for(const [key,n] of product()) addTerm(value,key,op==='+'?n:-n);
+     record('sum',start,value);
    }
    return value;
  }

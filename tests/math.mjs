@@ -92,3 +92,18 @@ assert.equal(grade({form:'number',answer:'3,51',expr:'√(12,34)',prompt:'Vypoč
 assert.equal(grade({form:'monomial',answer:'x²',expr:'2x² − x²'},'x³/x'),'wrong');
 assert.equal(grade({form:'power',answer:'x^2',expr:'x^4 : x^2'},'x^3/x'),'step');
 assert.equal(grade({form:'number',answer:'0'},'0,1 + 0,2 − 0,3'),'step');
+
+const {guide}=await import('../tutor.mjs');
+assert.equal(guide('(-3x)^2 + 2x²').answer,'11x^2');
+assert.equal(guide('√72').answer,'6√(2)');
+assert.equal(guide('∛(-8) + 4').answer,'2');
+assert.deepEqual(guide('x³/x').conditions,['x']);
+assert.ok(practiceBank('algebra',3,0).some(t=>t.expr.includes('^0')&&t.condition));
+assert.deepEqual(guide('(-2x)^0').conditions,['x']);
+assert.equal(guide('(-3)^2 + 2^3').steps.length,3);
+assert.throws(()=>guide('1/0'));
+assert.throws(()=>guide('x + 2 = 3'));
+const algebra={form:'algebra',expr:'(xy)^3',answer:'x^3y^3'};
+assert.equal(grade(algebra,'y³x³'),'correct');
+assert.equal(grade(algebra,'(xy)·(xy)·(xy)'),'step');
+assert.equal(grade(algebra,'x³y³ + 1'),'wrong');

@@ -1,17 +1,19 @@
 import {topics, LIMIT} from './tasks.mjs';
-import {modes, practiceBank} from './practice.mjs?v=3';
-import {grade} from './answers.mjs?v=4';
+import {modes, practiceBank} from './practice.mjs?v=5';
+import {grade} from './answers.mjs?v=5';
 import {math} from './render.mjs';
 import {coachHint, milestones, award} from './coach.mjs?v=3';
+import {customExercise} from './tutor.mjs?v=5';
 
 const demo=document.body.dataset.version==='demo';
 const root=document.querySelector('#app');
 const offer='<a class="button primary" href="https://fajndoucko.cz/fajncvicebna/">Chci plnou FajnCvičebnu</a>';
 const symbols=['(-3)^2','∛(-27)','x^2 · x^3','2^(-3)','√(72)','10^(-4)','(2 + 3)^2','(x + 3)^2'];
 const demoTopics=[0,1,2,4,5,7];
-const modeSymbols={mental:'3^2',tables:'√(2025)',calculator:'√(12,34)'};
+const modeSymbols={mental:'3^2',tables:'√(2025)',calculator:'√(12,34)',algebra:'x^2 · y^3'};
 const storageKey='fdc-powers-v1-'+(demo?'demo':'full');
 const hints={
+ algebra:'Piš x a y, exponent pomocí ^. Například 12x^3 nebo y^3/x^2.',
  number:'Zadej číslo. Můžeš použít desetinnou čárku nebo zlomek a/b.',
  choice:'Vyber odpověď.',
  power:'Zapiš výsledek jako mocninu nebo upravený součin či podíl mocnin. Exponent zapisuj pomocí ^.',
@@ -74,7 +76,7 @@ function hub(mode=null,game=false) {
  const gamePath=game?'/hra':'';
  const banner=demo?'<div class="notice">Demo nabízí 18 úloh celkem ve všech režimech dohromady. '+offer+'</div>':'';
  if(!mode) {
-   root.innerHTML='<section class="welcome"><div><h2>Procvičuj po svém</h2><p>Trénuj vlastním tempem nebo zkus výstup na vrchol. V každém režimu máš po ruce nápovědu.</p></div><a class="button primary" href="#hra">Hrát Výstup na vrchol</a></section>'+banner+'<h2>Jak chceš počítat?</h2><div class="grid">'+Object.entries(modes).map(([id,[title,description]])=>
+   root.innerHTML='<section class="welcome"><div><h2>Procvičuj po svém</h2><p>Trénuj vlastním tempem nebo zkus výstup na vrchol. V každém režimu máš po ruce nápovědu.</p></div><div class="row"><a class="button primary" href="#hra">Hrát Výstup na vrchol</a><a class="button" href="#algebra">Úlohy s proměnnými</a><a class="button" href="#vlastni">Vlastní příklad</a></div></section>'+banner+'<h2>Jak chceš počítat?</h2><div class="grid">'+Object.entries(modes).filter(([id])=>id!=='algebra').map(([id,[title,description]])=>
      '<section class="panel tile"><div class="art">'+math(modeSymbols[id])+'</div><h2>'+title+'</h2><p>'+description+'</p><a class="button" href="#'+id+'">Vybrat cvičebnu</a></section>'
    ).join('')+'</div>';
    return;
@@ -108,6 +110,7 @@ function exercise(mode,topic,level,game=false) {
  const gamePath=game?'/hra':'';
  const [modeTitle,modeDescription]=modes[mode];
  const [title,lesson,example]=topics[topic];
+ const schoolWork=mode==='mental'||mode==='algebra';
  const key=mode+'/'+topic+'/'+level;
  const counts=progress.stats[key]??={first:0,second:0,missed:0};
  root.innerHTML='<nav class="row toolbar"><a href="#'+mode+gamePath+'">← Výběr cvičebny</a>'+
@@ -116,8 +119,8 @@ function exercise(mode,topic,level,game=false) {
    '<div class="row"><label for="level">Obtížnost</label><select id="level">'+
     ['Základní','Střední','Pokročilá'].slice(0,demo?1:3).map((label,i)=>'<option value="'+i+'">'+label+'</option>').join('')+
    '</select></div><div id="practice"></div></section>'+
-   '<aside class="panel">'+(game?'<div id="game">'+gameCard()+'</div>':'')+'<h2>Jak na to</h2><p>'+(mode==='mental'?lesson:modeDescription)+'</p>'+
-   '<div class="notice">'+(mode==='mental'?example:mode==='tables'?'√(2025) = 45; 45^2 = 2025':'√(12,34) ≈ 3,51').split('; ').map(math).join('<br>')+'</div>'+
+   '<aside class="panel">'+(game?'<div id="game">'+gameCard()+'</div>':'')+'<h2>Jak na to</h2><p>'+(schoolWork?lesson:modeDescription)+'</p>'+
+   '<div class="notice">'+(schoolWork?example:mode==='tables'?'√(2025) = 45; 45^2 = 2025':'√(12,34) ≈ 3,51').split('; ').map(math).join('<br>')+'</div>'+
    '<h2>Výsledky této úrovně</h2><dl id="stats"></dl>'+(demo?offer:'')+'</aside></div>';
  const difficulty=root.querySelector('#level');
  difficulty.value=level;
@@ -153,6 +156,7 @@ function exercise(mode,topic,level,game=false) {
      '<p><button class="primary" type="submit">Zkontrolovat</button></p>';
    area.innerHTML=(demo?'<p class="muted">Ukázková úloha '+(progress.used+1)+' z '+LIMIT+'</p>':'')+
      '<p>'+task.prompt+'</p><div class="expression">'+math(task.expr)+'</div>'+
+     (task.condition?'<p class="muted">Podmínka '+math(task.condition)+'</p>':'')+
      '<details class="coach"><summary>Nápověda</summary><p>'+coachHint(mode,topic,task)+'</p></details><form>'+controls+'</form><p class="feedback" aria-live="polite"></p><div id="solution" hidden></div>'+
      '<button class="primary" id="next" type="button" hidden>Další úloha</button>';
    const coach=area.querySelector('.coach');
@@ -239,6 +243,7 @@ function route() {
    return;
  }
  const [mode,topicNumber,levelNumber,gameFlag]=hash.split('/');
+ if(hash==='vlastni') {customExercise(root);return;}
  if(hash==='hra') {hub('hra');return;}
  if(!Object.hasOwn(modes,mode)) {hub();return;}
  if(!topicNumber||topicNumber==='hra') {hub(mode,topicNumber==='hra');return;}

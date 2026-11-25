@@ -64,3 +64,9 @@ zastávky jsou dostupné ve stejném prohlížeči i po opětovném otevření.
 Správný mezikrok se zapíše pod úlohu a nespotřebuje pokus. Lze zadat
 i několik výrazů spojených rovnítkem. Cvičení zkontroluje každý z nich
 a vyžádá si závěrečný tvar podle zadání.
+
+Na rozcestníku **Úlohy s proměnnými** jsou samostatné banky s x a y.
+**Vlastní příklad** ukáže kroky ručně zadaného číselného výrazu nebo
+výrazu s x a y. Pomůcka je dostupná i v demu. Podporuje číselné odmocniny,
+celočíselné exponenty a dělení jednočlenem. Výpočty probíhají přímo v
+prohlížeči. Výstup s desetinnými hodnotami může být zaokrouhlený.
