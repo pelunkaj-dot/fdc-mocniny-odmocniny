@@ -94,8 +94,22 @@ function mental(topic,level,i) {
  }
 }
 
+function nearestRoot(base,radicand,power) {
+ const low=base**power, high=(base+1)**power;
+ const midpoint=base+0.5;
+ const threshold=midpoint**power;
+ const answer=radicand<threshold?base:base+1;
+ const symbol=power===2?'√':'∛';
+ const prompt='Odhadni odmocninu pomocí tabulky. Které celé číslo je jí nejblíž?';
+ const interval=low+' < '+radicand+' < '+high+', takže odmocnina leží mezi '+base+' a '+(base+1)+'. ';
+ const why=power===2
+   ? 'V tabulce je '+radicand+' od druhé mocniny čísla '+base+' vzdálené o '+(radicand-low)+' a od druhé mocniny čísla '+(base+1)+' o '+(high-radicand)+'. U celého čísla pod druhou odmocninou tak vychází nejblíž '+answer+'.'
+   : 'Hranicí je '+cz(midpoint)+'. Jeho třetí mocnina je '+cz(threshold)+'. Číslo '+radicand+' je '+(radicand<threshold?'menší':'větší')+', proto je odmocnina blíž k '+answer+'.';
+ return {...task(prompt,symbol+'('+radicand+')',answer,interval+why),estimatedRoot:power};
+}
+
 function tables(topic,level,i) {
- const n=11+i%85, choice=Math.floor(i/85), m=n+1;
+ const n=11+i%85, choice=Math.floor(i/85);
  if(topic===0) {
    const offset=choice+1;
    return task('Vyhledej druhou mocninu v tabulce. Potom dokonči výpočet.',
@@ -104,9 +118,8 @@ function tables(topic,level,i) {
  }
  if(topic===1) {
    if(level===0) return task('Najdi v tabulce druhou odmocninu. Potom přičti uvedené číslo.',root(n*n)+' + '+(choice+1),n+choice+1,'Číslo '+n*n+' najdeš ve sloupci druhých mocnin u čísla '+n+'.');
-   const target=n*n+choice+1;
-   return task(level===1?'Najdi celé číslo těsně pod odmocninou.':'Najdi celé číslo těsně nad odmocninou.',
-    root(target),level===1?n:m,'V tabulce porovnej '+n*n+' a '+m*m+'. Číslo '+target+' leží mezi nimi.');
+   const offsets=level===1?[1,2,2*n]:[n-1,n,n+1];
+   return nearestRoot(n,n*n+offsets[choice],2);
  }
  const p=1+choice;
  const bigger=(n+p)**2, smaller=n*n;
@@ -150,12 +163,15 @@ export function practiceBank(mode,topic,level) {
        entries.push(task('Najdi v tabulce třetí odmocninu.','∛('+cube+')',n,
         'Číslo '+cube+' je ve sloupci n³ v řádku se základem '+n+'.'));
      } else {
-       const radicand=cube+offset*14;
-       entries.push(task(level===2?'Najdi celé číslo těsně nad třetí odmocninou.':'Najdi celé číslo těsně pod třetí odmocninou.',
-        '∛('+radicand+')',level===2?n+1:n,
-        'Ve sloupci n³ najdeš sousední hodnoty '+cube+' a '+next+'. Číslo '+radicand+' leží mezi nimi.'));
+       const offsets=level===2
+         ? [-1,0,1].map(delta=>Math.floor((n+0.5)**3)-cube+delta)
+         : [14,42,next-cube-1];
+       entries.push(nearestRoot(n,cube+offsets[offset-1],3));
      }
    }
+ }
+ if(mode==='tables' && topic===1 && level===2) {
+   entries.push(nearestRoot(55,3027,2),nearestRoot(6,277,3));
  }
  if(mode==='mental' && topic===1 && level===0) {
    for(let i=0;i<5;i++) entries.push(makeTask(1,0,i*5));

@@ -50,7 +50,7 @@ for(const [mode,[,,list]] of Object.entries(modes)) {
    modeTotal+=tasks.length;
  }
 }
-assert.ok(practiceBank('tables',1,1).every(t=>/^[√∛]\(/.test(t.expr)&&t.prompt.includes('těsně pod')));
+assert.ok(practiceBank('tables',1,1).every(t=>/^[√∛]\(/.test(t.expr)&&t.prompt.includes('nejblíž')));
 assert.ok(practiceBank('calculator',0,1).every(t=>t.prompt.includes('3 desetinná místa')));
 assert.deepEqual(practiceBank('tables',2,0),[]);
 console.log(modeTotal+' úloh v bankách rozdělených podle pomůcky');
@@ -120,3 +120,18 @@ assert.deepEqual(findTableRows(2,'1 000 000'),{kind:'exact',rows:[100]});
 assert.deepEqual(findTableRows(2,'1 000 001'),{kind:'above',rows:[100]});
 assert.deepEqual(findTableRows(2,'1 00'),{kind:'invalid',rows:[]});
 assert.ok(practiceBank('tables',1,1).some(t=>t.expr==='∛(258)'&&t.answer==='6'));
+
+
+for(const level of [1,2]) {
+ const bank=practiceBank('tables',1,level);
+ for(const t of bank) {
+   const n=Number(t.expr.match(/\d+/)[0]);
+   const actual=t.expr.startsWith('∛')?Math.cbrt(n):Math.sqrt(n);
+   assert.equal(Number(t.answer),Math.round(actual),t.expr);
+ }
+}
+const estimateBank=practiceBank('tables',1,2);
+const reported=estimateBank.find(t=>t.expr==='√(3027)');
+assert.equal(grade(reported,'55'),'correct');
+assert.equal(grade(reported,'56'),'wrong');
+assert.equal(estimateBank.find(t=>t.expr==='∛(277)').answer,'7');

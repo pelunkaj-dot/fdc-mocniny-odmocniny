@@ -10,6 +10,8 @@ const ruleHints=[
 ];
 
 export function coachHint(mode,topic,task) {
+ if(task.estimatedRoot===2) return 'Najdi v tabulce dvě sousední druhé mocniny, mezi kterými je zadané číslo. Porovnej, ke které z nich má blíž.';
+ if(task.estimatedRoot===3) return 'Najdi dva sousední celé základy. Když není zřejmé, ke kterému je odmocnina blíž, umocni jejich střed na třetí a porovnej ho s číslem pod odmocninou.';
  if(mode==='tables') {
    const column=task.expr?.includes('∛')||/\^3/.test(task.expr??'')?'třetích':'druhých';
    return topic===1

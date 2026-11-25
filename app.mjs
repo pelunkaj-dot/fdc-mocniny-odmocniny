@@ -1,8 +1,8 @@
 import {topics, LIMIT} from './tasks.mjs';
-import {modes, practiceBank} from './practice.mjs?v=6';
+import {modes, practiceBank} from './practice.mjs?v=7';
 import {grade} from './answers.mjs?v=5';
 import {math} from './render.mjs';
-import {coachHint, milestones, award} from './coach.mjs?v=6';
+import {coachHint, milestones, award} from './coach.mjs?v=7';
 import {customExercise} from './tutor.mjs?v=5';
 import {createPowerTable} from './power-table.mjs';
 
