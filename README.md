@@ -56,7 +56,11 @@ Aplikace nemá běhové externí závislosti. Zvuk tvoří tři tóny Web Audio.
 
 ## Nápověda a hra
 
-Tlačítko Nápověda u úlohy nabídne první krok podle zadání a způsobu práce.
+První pokus je samostatný. Nápověda se ukáže po první chybné odpovědi
+nebo po volbě **Nevím, jak začít**, která přejde rovnou k druhému pokusu.
+Po správném mezikroku se ukáže pokyn k další operaci. Žák si pak může
+zobrazit celé řešení, stejně jako po první chybě nebo vyžádání nápovědy.
+Po druhé chybě se řešení ukáže automaticky.
 Hra Výstup na vrchol odměňuje správné odpovědi body. Správná odpověď po
 nápovědě nebo na druhý pokus také posune hráče po trase. Body a odemčené
 zastávky jsou dostupné ve stejném prohlížeči i po opětovném otevření.

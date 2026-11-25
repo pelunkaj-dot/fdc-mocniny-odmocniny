@@ -125,8 +125,8 @@ function exercise(mode,topic,level,game=false) {
    '<div class="row"><label for="level">Obtížnost</label><select id="level">'+
     ['Základní','Střední','Pokročilá'].slice(0,demo?1:3).map((label,i)=>'<option value="'+i+'">'+label+'</option>').join('')+
    '</select></div><div id="practice"></div></section>'+
-   '<aside class="panel">'+(table?'<div id="table-desktop"></div>':'')+(game?'<div id="game">'+gameCard()+'</div>':'')+'<h2>Jak na to</h2><p>'+(schoolWork?lesson:modeDescription)+'</p>'+
-   '<div class="notice">'+(schoolWork?example:mode==='tables'?'√(2025) = 45; 45^2 = 2025':'√(12,34) ≈ 3,51').split('; ').map(math).join('<br>')+'</div>'+
+   '<aside class="panel">'+(table?'<div id="table-desktop"></div>':'')+(game?'<div id="game">'+gameCard()+'</div>':'')+'<section id="work-guide" hidden><h2>Jak na to</h2><p>'+(schoolWork?lesson:modeDescription)+'</p>'+
+   '<div class="notice">'+(schoolWork?example:mode==='tables'?'√(2025) = 45; 45^2 = 2025':'√(12,34) ≈ 3,51').split('; ').map(math).join('<br>')+'</div></section>'+
    '<h2>Výsledky této úrovně</h2><dl id="stats"></dl>'+(demo?offer:'')+'</aside></div>';
  const difficulty=root.querySelector('#level');
  difficulty.value=level;
@@ -145,6 +145,7 @@ function exercise(mode,topic,level,game=false) {
      (total?Math.round(100*correct/total)+' %':'—')+'</dd>';
  }
  const area=root.querySelector('#practice');
+ const workGuide=root.querySelector('#work-guide');
  const scroll=table?.querySelector('.table-scroll');
  let tablePosition=0;
  let wasNarrow=null;
@@ -173,6 +174,7 @@ function exercise(mode,topic,level,game=false) {
 
  function renderTask(focus=false) {
    stats();
+   workGuide.hidden=true;
    // Preserve the same table and its scroll position while replacing the exercise.
    if(tableMedia.matches&&table?.isConnected&&table.open) tablePosition=scroll.scrollTop;
    if(demo&&progress.used>=LIMIT) {
@@ -191,13 +193,16 @@ function exercise(mode,topic,level,game=false) {
    area.innerHTML=(demo?'<p class="muted">Ukázková úloha '+(progress.used+1)+' z '+LIMIT+'</p>':'')+
      '<p>'+task.prompt+'</p><div class="expression">'+math(task.expr)+'</div>'+tableSlot+
      (task.condition?'<p class="muted">Podmínka '+math(task.condition)+'</p>':'')+
-     '<details class="coach"><summary>Nápověda</summary><p>'+coachHint(mode,topic,task)+'</p></details><section class="continuation" hidden><strong>Správný mezikrok</strong>'+
+     '<section class="continuation" hidden><strong>Správný mezikrok</strong>'+
      '<ol id="steps" aria-label="Správné mezikroky"></ol><p id="step-direction"></p></section>'+
-     '<form>'+controls+'</form><p class="feedback" aria-live="polite"></p><div id="solution" hidden></div>'+
+     '<div class="coach task-help" id="task-hint" hidden><strong>Nápověda</strong><p></p></div>'+
+     '<form>'+controls+'</form><p class="feedback" aria-live="polite"></p>'+
+     '<div class="row task-help-actions"><button type="button" id="give-up" aria-describedby="give-up-note">Nevím, jak začít</button>'+
+     '<small id="give-up-note">Nápověda se otevře a přejdeš k druhému pokusu.</small>'+
+     '<button type="button" id="show-solution" hidden>Zobrazit řešení</button></div><div id="solution" hidden></div>'+
      '<button class="primary" id="next" type="button" hidden>Další úloha</button>';
    mountPowerTable?.();
-   const coach=area.querySelector('.coach');
-   coach.ontoggle=()=>{if(coach.open) assisted=true;};
+   const coach=area.querySelector('#task-hint');
    const form=area.querySelector('form');
    const input=form.querySelector('input');
    const feedback=area.querySelector('.feedback');
@@ -206,6 +211,32 @@ function exercise(mode,topic,level,game=false) {
    const direction=area.querySelector('#step-direction');
    const solution=area.querySelector('#solution');
    const next=area.querySelector('#next');
+   const giveUp=area.querySelector('#give-up');
+   const giveUpNote=area.querySelector('#give-up-note');
+   const showSolution=area.querySelector('#show-solution');
+   const focusAnswer=()=> (input??form.querySelector('button')).focus();
+   function unlockSolution() {
+     giveUp.hidden=true;
+     giveUpNote.hidden=true;
+     showSolution.hidden=false;
+     workGuide.hidden=false;
+   }
+   function showHint() {
+     unlockSolution();
+     assisted=true;
+     coach.hidden=false;
+     coach.querySelector('p').textContent=steps.lastElementChild
+       ? continuationHint(task,steps.lastElementChild.textContent,'step')
+       : coachHint(mode,topic,task);
+     input?.setAttribute('aria-describedby',steps.lastElementChild?'task-hint step-direction hint':'task-hint hint');
+   }
+   giveUp.onclick=()=>{
+     attempts=1;
+     showHint();
+     feedback.textContent='Podívej se na nápovědu. Pak zkus druhý pokus.';
+     focusAnswer();
+   };
+   showSolution.onclick=()=>finish(false);
    if(focus) (input??form.querySelector('button')).focus();
    next.onclick=()=>renderTask(true);
    function submit(answer) {
@@ -214,6 +245,8 @@ function exercise(mode,topic,level,game=false) {
      feedback.dataset.status=result;
      if(result==='step'||result==='form') {
        feedback.textContent='';
+       coach.hidden=true;
+       unlockSolution();
        const heading=continuation.querySelector('strong');
        heading.textContent=result==='form'?'Hodnota souhlasí':'Správný mezikrok';
        direction.textContent=continuationHint(task,answer,result)+' Do pole níže napiš, co ti vyšlo, a stiskni Enter nebo Zkontrolovat.';
@@ -237,19 +270,29 @@ function exercise(mode,topic,level,game=false) {
      }
      attempts++;
      if(result!=='correct' && attempts===1) {
-       feedback.textContent='Zkus to ještě jednou.';
-       input?.focus();
+       showHint();
+       feedback.textContent='Zkus to ještě jednou. Nápovědu máš nad odpovědí.';
+       focusAnswer();
        input?.select();
        return;
      }
+     finish(result==='correct');
+   }
+   function finish(correct) {
+     if(finished) return;
      finished=true;
      direction.hidden=true;
-     if(result==='correct') {
+     coach.hidden=true;
+     giveUp.hidden=true;
+     giveUpNote.hidden=true;
+     showSolution.hidden=true;
+     workGuide.hidden=false;
+     if(correct) {
        counts[attempts===1?'first':'second']++;
        feedback.textContent='Správně!';
        if(game) {
          const before=progress.points??0;
-         progress.points=award(before,result,attempts,assisted||coach.open);
+         progress.points=award(before,'correct',attempts,assisted);
          const unlocked=milestones.filter(([,minimum])=>minimum>before&&minimum<=progress.points).at(-1);
          feedback.textContent+=' +'+(progress.points-before)+(progress.points-before===1?' bod':' body')+'.'+(unlocked?' Odemčeno: '+unlocked[0]+'!':'');
          root.querySelector('#game').innerHTML=gameCard();
